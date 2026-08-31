@@ -1,7 +1,7 @@
 import { Image as ImageIcon, Play, FileText, User, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Base = { className?: string; label?: string };
+type Base = { className?: string | undefined; label?: string | undefined };
 
 /**
  * Placeholder primitives.
@@ -15,7 +15,7 @@ export function ImagePlaceholder({
   src,
   alt,
   ratio = "aspect-[4/3]",
-}: Base & { src?: string; alt?: string; ratio?: string }) {
+}: Base & { src?: string | undefined; alt?: string | undefined; ratio?: string | undefined }) {
   if (src) {
     return (
       <img
@@ -51,7 +51,7 @@ export function VideoPlaceholder({
   url,
   poster,
   ratio = "aspect-video",
-}: Base & { url?: string; poster?: string; ratio?: string }) {
+}: Base & { url?: string | undefined; poster?: string | undefined; ratio?: string | undefined }) {
   if (url) {
     return (
       <video
@@ -86,7 +86,7 @@ export function LogoPlaceholder({
   className,
   label = "LOGO",
   src,
-}: Base & { src?: string }) {
+}: Base & { src?: string | undefined }) {
   if (src) {
     return <img src={src} alt={label} loading="lazy" className={cn("h-14 object-contain", className)} />;
   }
@@ -107,7 +107,7 @@ export function AvatarPlaceholder({
   className,
   label = "PORTRAIT PLACEHOLDER",
   src,
-}: Base & { src?: string }) {
+}: Base & { src?: string | undefined }) {
   if (src) {
     return (
       <img
