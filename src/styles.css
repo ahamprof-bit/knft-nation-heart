@@ -158,3 +158,56 @@
     color: var(--color-foreground);
   }
 }
+
+@theme inline {
+  --color-forest: var(--forest);
+  --color-emerald: var(--emerald);
+  --color-natural: var(--natural);
+  --color-offwhite: var(--offwhite);
+  --color-charcoal: var(--charcoal);
+  --shadow-soft: var(--shadow-soft);
+  --shadow-lift: var(--shadow-lift);
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+  }
+}
+
+@utility bg-hero-gradient {
+  background-image: var(--gradient-hero);
+}
+
+@utility bg-leaf-gradient {
+  background-image: var(--gradient-leaf);
+}
+
+@utility surface-card {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+  transition: box-shadow 250ms ease, transform 250ms ease;
+}
+
+@utility placeholder-surface {
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--offwhite),
+    var(--offwhite) 12px,
+    var(--secondary) 12px,
+    var(--secondary) 24px
+  );
+  color: var(--secondary-foreground);
+}
