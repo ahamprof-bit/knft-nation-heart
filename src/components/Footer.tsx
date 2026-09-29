@@ -1,14 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { Facebook, Leaf, Mail } from "lucide-react";
-import { siteConfig } from "@/data/siteConfig";
+import { Facebook, Mail } from "lucide-react";
+import { siteConfig, navLinks } from "@/data/siteConfig";
+import logo from "@/assets/knft-logo.png.jpg";
 
-const quickLinks = [
-  { label: "About", to: "/about" },
-  { label: "Our Work", to: "/our-work" },
-  { label: "Projects", to: "/projects" },
-  { label: "Impact", to: "/impact" },
-  { label: "Gallery", to: "/gallery" },
-] as const;
+const quickLinks = navLinks.filter(
+  (link) => link.to !== "/contact"
+);
 
 const actionLinks = [
   { label: "Volunteer", to: "/volunteer" },
@@ -28,49 +25,97 @@ const legalLinks = [
 export function Footer() {
   return (
     <footer className="bg-forest text-primary-foreground">
+      {/* Main Footer */}
       <div className="mx-auto grid w-full max-w-7xl gap-10 px-5 py-16 sm:px-8 lg:grid-cols-4">
+
+        {/* Organisation */}
         <div>
-          <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-dashed border-white/40 bg-white/10">
-              <Leaf className="h-5 w-5" aria-hidden />
-            </span>
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase opacity-70">
-              [ KNFT Logo ]
-            </span>
-          </div>
-          <p className="mt-5 font-display text-xl font-semibold">{siteConfig.name}</p>
-          <p className="mt-1 text-sm opacity-80">{siteConfig.tagline}</p>
+          <Link
+            to="/"
+            className="inline-flex items-center gap-3"
+          >
+            <img
+              src={logo}
+              alt="Kalam Nation First Trust Logo"
+              className="h-14 w-14 shrink-0 rounded-lg object-contain"
+            />
+
+            <div className="flex flex-col leading-tight">
+              <span className="font-display text-sm font-bold tracking-wide text-white sm:text-base">
+                KALAM NATION FIRST
+              </span>
+
+              <span className="text-[10px] font-semibold tracking-[0.28em] text-white/70 sm:text-xs">
+                TRUST
+              </span>
+            </div>
+          </Link>
+
+          <p className="mt-5 text-sm leading-6 text-white/80">
+            {siteConfig.tagline}
+          </p>
+
+          {/* Email */}
           <a
             href={`mailto:${siteConfig.email}`}
-            className="mt-5 inline-flex items-center gap-2 text-sm underline-offset-4 hover:underline"
+            className="mt-5 inline-flex items-center gap-2 text-sm text-white/90 underline-offset-4 hover:underline"
           >
-            <Mail className="h-4 w-4" aria-hidden />
+            <Mail
+              className="h-4 w-4"
+              aria-hidden
+            />
+
             {siteConfig.email}
           </a>
-          <div className="mt-5">
-            <a
-              href={siteConfig.social.facebook}
-              target="_blank"
-              rel="noreferrer noopener"
-              aria-label="KNFT on Facebook"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-white/10 transition-colors hover:bg-white/20"
-            >
-              <Facebook className="h-4 w-4" aria-hidden />
-            </a>
-          </div>
+
+          {/* Facebook */}
+          {siteConfig.social?.facebook && (
+            <div className="mt-5">
+              <a
+                href={siteConfig.social.facebook}
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label="Kalam Nation First Trust on Facebook"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-white/10 transition-colors hover:bg-white/20"
+              >
+                <Facebook
+                  className="h-4 w-4"
+                  aria-hidden
+                />
+              </a>
+            </div>
+          )}
         </div>
 
-        <FooterCol title="Explore" links={quickLinks} />
-        <FooterCol title="Take Action" links={actionLinks} />
-        <FooterCol title="Legal" links={legalLinks} />
+        {/* Explore */}
+        <FooterCol
+          title="Explore"
+          links={quickLinks}
+        />
+
+        {/* Take Action */}
+        <FooterCol
+          title="Take Action"
+          links={actionLinks}
+        />
+
+        {/* Legal */}
+        <FooterCol
+          title="Legal"
+          links={legalLinks}
+        />
       </div>
 
+      {/* Bottom Footer */}
       <div className="border-t border-white/15">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-5 py-6 text-xs opacity-70 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-5 py-6 text-xs text-white/70 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <p>
             © {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
           </p>
-          <p>{siteConfig.tagline}</p>
+
+          <p>
+            {siteConfig.tagline}
+          </p>
         </div>
       </div>
     </footer>
@@ -82,16 +127,25 @@ function FooterCol({
   links,
 }: {
   title: string;
-  links: readonly { label: string; to: string }[];
+  links: readonly {
+    label: string;
+    to: string;
+  }[];
 }) {
   return (
     <div>
-      <p className="text-[11px] font-semibold tracking-[0.2em] uppercase opacity-70">{title}</p>
+      <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/70">
+        {title}
+      </p>
+
       <ul className="mt-4 space-y-2 text-sm">
-        {links.map((l) => (
-          <li key={l.label}>
-            <Link to={l.to} className="opacity-85 underline-offset-4 hover:underline">
-              {l.label}
+        {links.map((link) => (
+          <li key={link.label}>
+            <Link
+              to={link.to}
+              className="text-white/85 underline-offset-4 transition-colors hover:text-white hover:underline"
+            >
+              {link.label}
             </Link>
           </li>
         ))}

@@ -3,11 +3,6 @@ import { cn } from "@/lib/utils";
 
 type Base = { className?: string | undefined; label?: string | undefined };
 
-/**
- * Placeholder primitives.
- * Every media slot on the site goes through one of these. When the client
- * supplies real media, pass `src` and the placeholder disappears.
- */
 
 export function ImagePlaceholder({
   className,
