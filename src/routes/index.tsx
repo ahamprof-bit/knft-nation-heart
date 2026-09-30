@@ -24,16 +24,6 @@ import {
 
 /* ============================================================
    IMAGE IMPORT
-   ============================================================
-
-   Vite scans everything inside src/assets.
-
-   IMPORTANT:
-   Keep your actual images inside:
-
-   src/assets/
-
-   This avoids importing files from folders outside src.
    ============================================================ */
 
 const categoryImages = import.meta.glob(
@@ -66,6 +56,7 @@ function normalizeText(value: string) {
   return value
     .toLowerCase()
     .replace(/&/g, "and")
+    .replace(/[_–—-]/g, " ")
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
 }
@@ -74,10 +65,10 @@ function normalizeText(value: string) {
    ALL AVAILABLE IMAGES
    ============================================================ */
 
-const allAvailableImages = Object.values(categoryImages);
+const allAvailableImages = Object.values(categoryImages).filter(Boolean);
 
 /* ============================================================
-   FIND IMAGE BY EXACT FILENAME
+   FIND IMAGE BY FILENAME
    ============================================================ */
 
 function findImageByFilename(
@@ -90,7 +81,9 @@ function findImageByFilename(
       const basename =
         path.split("/").pop() ?? path;
 
-      return normalizeText(basename) === target;
+      return (
+        normalizeText(basename) === target
+      );
     },
   );
 
@@ -98,36 +91,129 @@ function findImageByFilename(
 }
 
 /* ============================================================
-   SAFE FALLBACK IMAGES
+   FIND IMAGES BY PATH / FOLDER KEYWORDS
    ============================================================ */
 
+function findImagesByKeywords(
+  keywords: string[],
+): string[] {
+  const normalizedKeywords =
+    keywords.map(normalizeText);
+
+  const matches = Object.entries(
+    categoryImages,
+  )
+    .filter(([path]) => {
+      const normalizedPath =
+        normalizeText(path);
+
+      return normalizedKeywords.some(
+        (keyword) =>
+          normalizedPath.includes(keyword),
+      );
+    })
+    .map(([, image]) => image)
+    .filter(Boolean);
+
+  return [...new Set(matches)];
+}
+
+/* ============================================================
+   FIND IMAGES BY ALL KEYWORDS
+   ============================================================ */
+
+function findImagesMatchingAllKeywords(
+  keywords: string[],
+): string[] {
+  const normalizedKeywords =
+    keywords.map(normalizeText);
+
+  const matches = Object.entries(
+    categoryImages,
+  )
+    .filter(([path]) => {
+      const normalizedPath =
+        normalizeText(path);
+
+      return normalizedKeywords.every(
+        (keyword) =>
+          normalizedPath.includes(keyword),
+      );
+    })
+    .map(([, image]) => image)
+    .filter(Boolean);
+
+  return [...new Set(matches)];
+}
+
+/* ============================================================
+   HERO IMAGE
+   ============================================================ */
+
+/*
+  First priority:
+  KNFT_5_Photo_Collage.jpg
+
+  Then common KNFT images.
+
+  Finally:
+  first available image inside src/assets.
+*/
+
 const heroImage =
-  findImageByFilename("hero.png") ??
+  findImageByFilename(
+    "KNFT_5_Photo_Collage.jpg",
+  ) ??
+  findImageByFilename(
+    "hero.png",
+  ) ??
   findImageByFilename(
     "Polish_20250208_071036066.jpg",
   ) ??
+  findImagesByKeywords([
+    "knft",
+    "hero",
+    "collage",
+  ])[0] ??
   allAvailableImages[0] ??
   "";
+
+/* ============================================================
+   ABOUT IMAGES
+   ============================================================ */
 
 const aboutImage1 =
   findImageByFilename(
     "Polish_20250208_071036066.jpg",
   ) ??
+  findImagesByKeywords([
+    "Polish_20250208_071036066",
+  ])[0] ??
   heroImage;
 
 const aboutImage2 =
   findImageByFilename(
     "Polish_20250301_095608729.jpg",
   ) ??
+  findImagesByKeywords([
+    "Polish_20250301_095608729",
+  ])[0] ??
   aboutImage1;
+
+/* ============================================================
+   MALKHAMB IMAGE
+   ============================================================ */
 
 const malkhambImage =
   findImageByFilename(
-    "IMG20250416111644.jpg",
-  ) ??
-  findImageByFilename(
     "IMG20250416111644_01.jpg",
   ) ??
+  findImageByFilename(
+    "IMG20250416111644.jpg",
+  ) ??
+  findImagesByKeywords([
+    "malkhamb",
+  ])[0] ??
   aboutImage2;
 
 /* ============================================================
@@ -238,7 +324,7 @@ const categoryAliases: Record<
 };
 
 /* ============================================================
-   GET SEARCH TERMS
+   GET CATEGORY SEARCH TERMS
    ============================================================ */
 
 function getCategorySearchTerms(
@@ -281,7 +367,8 @@ function getCategorySearchTerms(
       ...aliases,
     ]);
 
-  const terms = matchingGroups.flat();
+  const terms =
+    matchingGroups.flat();
 
   return terms.length
     ? [
@@ -300,7 +387,9 @@ function getCategoryImages(
   categoryTitle: string,
 ): string[] {
   const searchTerms =
-    getCategorySearchTerms(categoryTitle);
+    getCategorySearchTerms(
+      categoryTitle,
+    );
 
   const matches = Object.entries(
     categoryImages,
@@ -309,47 +398,52 @@ function getCategoryImages(
       const normalizedPath =
         normalizeText(path);
 
-      return searchTerms.some((term) =>
-        normalizedPath.includes(term),
+      return searchTerms.some(
+        (term) =>
+          normalizedPath.includes(term),
       );
     })
-    .map(([, image]) => image);
+    .map(([, image]) => image)
+    .filter(Boolean);
 
   return [...new Set(matches)];
-}
-
-/* ============================================================
-   RESOLVE EXACT PATH
-   ============================================================ */
-
-function resolveImage(
-  path: string,
-): string | undefined {
-  return categoryImages[path];
 }
 
 /* ============================================================
    WATER RESTORATION IMAGES
    ============================================================ */
 
-const waterImages = [
-  "/src/assets/new folder/01 WATER RESTORATION/01 – Best Photos/1759853647390.jpg",
-  "/src/assets/new folder/01 WATER RESTORATION/01 – Best Photos/1759853988061.jpg",
-  "/src/assets/new folder/01 WATER RESTORATION/01 – Best Photos/1780073254157.png",
-  "/src/assets/new folder/01 WATER RESTORATION/01 – Best Photos/1780073660152.png",
-  "/src/assets/new folder/01 WATER RESTORATION/01 – Best Photos/DJI_20251227115143_0097_D.JPG",
-  "/src/assets/new folder/01 WATER RESTORATION/01 – Best Photos/DJI_20251227115345_0102_D.JPG",
-  "/src/assets/new folder/01 WATER RESTORATION/01 – Best Photos/DJI_20251227115410_0104_D.JPG",
-  "/src/assets/new folder/01 WATER RESTORATION/01 – Best Photos/IMG-20250921-WA0023.jpg",
-  "/src/assets/new folder/01 WATER RESTORATION/01 – Best Photos/IMG-20250921-WA0027.jpg",
-  "/src/assets/new folder/01 WATER RESTORATION/01 – Best Photos/IMG-20250829-WA0023.jpg",
-  "/src/assets/new folder/01 WATER RESTORATION/01 – Best Photos/Polish_20260318_105454399.jpg",
-];
+/*
+  IMPORTANT:
+  No hard-coded /src/assets/new folder/... paths.
 
-const resolvedWaterImages =
-  waterImages
-    .map(resolveImage)
-    .filter(Boolean) as string[];
+  We search the real Vite glob keys instead.
+*/
+
+const resolvedWaterImages = (() => {
+  const bestPhotos =
+    findImagesMatchingAllKeywords([
+      "water restoration",
+      "best photos",
+    ]);
+
+  if (bestPhotos.length > 0) {
+    return bestPhotos;
+  }
+
+  const waterRestoration =
+    findImagesByKeywords([
+      "water restoration",
+    ]);
+
+  if (waterRestoration.length > 0) {
+    return waterRestoration;
+  }
+
+  return getCategoryImages(
+    "Water Restoration",
+  );
+})();
 
 /* ============================================================
    LAKE RESTORATION PROJECTS
@@ -451,7 +545,8 @@ function getLakeImages(
               normalizedPath.includes(term),
           );
         })
-        .map(([, image]) => image),
+        .map(([, image]) => image)
+        .filter(Boolean),
     ),
   ];
 }
@@ -478,7 +573,8 @@ function getLakeVideos(
               normalizedPath.includes(term),
           );
         })
-        .map(([, video]) => video),
+        .map(([, video]) => video)
+        .filter(Boolean),
     ),
   ];
 }
@@ -575,7 +671,7 @@ function Home() {
           aboutImage1,
           aboutImage2,
           malkhambImage,
-        ];
+        ].filter(Boolean);
 
   /* ==========================================================
      COMMUNITY CATEGORIES
@@ -632,15 +728,13 @@ function Home() {
       (lake) =>
         lake.images
           .slice(0, 2)
-          .map(
-            (image, index) => ({
-              image,
+          .map((image, index) => ({
+            image,
 
-              alt: `${lake.name} restoration activity ${
-                index + 1
-              }`,
-            }),
-          ),
+            alt: `${lake.name} restoration activity ${
+              index + 1
+            }`,
+          })),
     ),
   ].filter(
     (
@@ -728,6 +822,8 @@ function Home() {
                     src={heroImage}
                     alt="Kalam Nation First Trust"
                     className="aspect-[4/3] w-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                    decoding="async"
+                    fetchPriority="high"
                   />
                 ) : (
                   <div className="flex aspect-[4/3] items-center justify-center bg-black/20 text-sm text-white/60">
@@ -808,6 +904,7 @@ function Home() {
                     alt="KNFT community initiative"
                     className="aspect-[3/4] w-full object-cover"
                     loading="lazy"
+                    decoding="async"
                   />
                 ) : null}
               </div>
@@ -819,6 +916,7 @@ function Home() {
                     alt="KNFT volunteers"
                     className="aspect-[3/4] w-full object-cover"
                     loading="lazy"
+                    decoding="async"
                   />
                 ) : null}
               </div>
@@ -1008,7 +1106,7 @@ function Home() {
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center bg-secondary p-6 text-center text-sm text-muted-foreground">
-                        Image coming soon
+                        {programme.title}
                       </div>
                     )}
 
@@ -1023,9 +1121,7 @@ function Home() {
                       </div>
 
                       <h3 className="mt-4 text-xl font-semibold text-white">
-                        {
-                          programme.title
-                        }
+                        {programme.title}
                       </h3>
                     </div>
 
@@ -1080,7 +1176,10 @@ function Home() {
 
         <div className="mt-12 space-y-16">
           {communitySections.map(
-            ({ category, images }, categoryIndex) => (
+            (
+              { category, images },
+              categoryIndex,
+            ) => (
               <Reveal
                 key={category}
                 delay={
@@ -1188,11 +1287,11 @@ function Home() {
                         }
                         className="aspect-[16/9] w-full object-cover transition-transform duration-700 hover:scale-105"
                         loading="lazy"
+                        decoding="async"
                       />
                     ) : (
                       <div className="flex aspect-[16/9] items-center justify-center bg-muted text-sm text-muted-foreground">
-                        Project image
-                        coming soon
+                        {project.title}
                       </div>
                     )}
 
@@ -1201,25 +1300,17 @@ function Home() {
 
                   <div className="flex flex-1 flex-col p-7">
                     <h3 className="text-2xl font-semibold">
-                      {
-                        project.title
-                      }
+                      {project.title}
                     </h3>
 
                     <div className="mt-4 flex flex-wrap gap-2">
                       {project.highlights.map(
-                        (
-                          highlight,
-                        ) => (
+                        (highlight) => (
                           <span
-                            key={
-                              highlight
-                            }
+                            key={highlight}
                             className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground"
                           >
-                            {
-                              highlight
-                            }
+                            {highlight}
                           </span>
                         ),
                       )}
@@ -1293,9 +1384,7 @@ function Home() {
                       <div className="relative aspect-[16/10] overflow-hidden">
                         {coverImage ? (
                           <img
-                            src={
-                              coverImage
-                            }
+                            src={coverImage}
                             alt={`${lake.name} restoration project`}
                             className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                             loading="lazy"
@@ -1303,8 +1392,7 @@ function Home() {
                           />
                         ) : (
                           <div className="flex h-full items-center justify-center bg-muted text-sm text-muted-foreground">
-                            Image coming
-                            soon
+                            {lake.name}
                           </div>
                         )}
 
@@ -1371,6 +1459,7 @@ function Home() {
                                       }`}
                                       className="aspect-square w-full object-cover transition-transform duration-500 hover:scale-110"
                                       loading="lazy"
+                                      decoding="async"
                                     />
                                   </div>
                                 ),
@@ -1464,16 +1553,12 @@ function Home() {
                       {"year" in item &&
                       item.year ? (
                         <p className="font-display text-3xl font-bold text-primary">
-                          {
-                            item.year
-                          }
+                          {item.year}
                         </p>
                       ) : null}
 
                       <h3 className="mt-2 text-xl font-semibold">
-                        {
-                          item.title
-                        }
+                        {item.title}
                       </h3>
                     </div>
 
