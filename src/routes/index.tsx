@@ -24,16 +24,6 @@ import {
 
 /* ============================================================
    IMAGE IMPORT
-   ============================================================
-
-   Vite scans everything inside src/assets.
-
-   IMPORTANT:
-   Keep your actual images inside:
-
-   src/assets/
-
-   This avoids importing files from folders outside src.
    ============================================================ */
 
 const categoryImages = import.meta.glob(
@@ -73,10 +63,178 @@ function normalizeText(value: string) {
 }
 
 /* ============================================================
+   PATH NORMALIZER
+   ============================================================ */
+
+function normalizeAssetPath(value: string) {
+  return value
+    .replace(/\\/g, "/")
+    .replace(/^\/+/, "")
+    .toLowerCase()
+    .replace(/[–—]/g, "-")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/* ============================================================
+   IMAGE EXTENSION HELPERS
+   ============================================================ */
+
+function removeImageExtension(value: string) {
+  return value.replace(
+    /\.(jpg|jpeg|png|webp)$/i,
+    "",
+  );
+}
+
+function isWebpPath(value: string) {
+  return /\.webp$/i.test(value);
+}
+
+/* ============================================================
+   IMAGE ENTRIES
+   ============================================================ */
+
+const imageEntries = Object.entries(
+  categoryImages,
+);
+
+/* ============================================================
+   WEBP-FIRST IMAGE RESOLVER
+   ============================================================
+
+   If requested:
+
+   image.jpg
+
+   the resolver tries:
+
+   image.webp
+   image.jpg.webp
+   image.jpg
+
+   This supports both normal WebP naming and any
+   extension-preserving WebP files that may exist.
+   ============================================================ */
+
+function resolveWebpFirst(
+  requestedPath: string,
+): string | undefined {
+  const requestedNormalized =
+    normalizeAssetPath(requestedPath);
+
+  const requestedWithoutExtension =
+    normalizeAssetPath(
+      removeImageExtension(
+        requestedPath,
+      ),
+    );
+
+  /* ----------------------------------------------------------
+     1. EXACT WEBP MATCH
+     ---------------------------------------------------------- */
+
+  const exactWebp = imageEntries.find(
+    ([sourcePath]) => {
+      const normalizedSource =
+        normalizeAssetPath(sourcePath);
+
+      return (
+        isWebpPath(normalizedSource) &&
+        (
+          normalizedSource ===
+            requestedNormalized.replace(
+              /\.(jpg|jpeg|png)$/i,
+              ".webp",
+            ) ||
+          normalizeAssetPath(
+            removeImageExtension(
+              normalizedSource,
+            ),
+          ) ===
+            requestedWithoutExtension
+        )
+      );
+    },
+  );
+
+  if (exactWebp) {
+    return exactWebp[1];
+  }
+
+  /* ----------------------------------------------------------
+     2. WEBP MATCH BY FILENAME
+     ---------------------------------------------------------- */
+
+  const requestedFilename =
+    requestedWithoutExtension
+      .split("/")
+      .pop() ?? requestedWithoutExtension;
+
+  const webpByFilename =
+    imageEntries.find(
+      ([sourcePath]) => {
+        const normalizedSource =
+          normalizeAssetPath(sourcePath);
+
+        if (!isWebpPath(normalizedSource)) {
+          return false;
+        }
+
+        const sourceFilename =
+          normalizeAssetPath(
+            removeImageExtension(
+              normalizedSource
+                .split("/")
+                .pop() ??
+                normalizedSource,
+            ),
+          );
+
+        return (
+          sourceFilename ===
+          requestedFilename
+        );
+      },
+    );
+
+  if (webpByFilename) {
+    return webpByFilename[1];
+  }
+
+  /* ----------------------------------------------------------
+     3. ORIGINAL IMAGE FALLBACK
+     ---------------------------------------------------------- */
+
+  const original = imageEntries.find(
+    ([sourcePath]) => {
+      const normalizedSource =
+        normalizeAssetPath(sourcePath);
+
+      return (
+        normalizedSource ===
+          requestedNormalized ||
+        normalizedSource.endsWith(
+          requestedNormalized,
+        )
+      );
+    },
+  );
+
+  return original?.[1];
+}
+
+/* ============================================================
    ALL AVAILABLE IMAGES
    ============================================================ */
 
-const allAvailableImages = Object.values(categoryImages);
+const allAvailableImages =
+  imageEntries
+    .filter(
+      ([path]) =>
+        !isWebpPath(path),
+    )
+    .map(([, image]) => image);
 
 /* ============================================================
    FIND IMAGE BY EXACT FILENAME
@@ -85,18 +243,9 @@ const allAvailableImages = Object.values(categoryImages);
 function findImageByFilename(
   filename: string,
 ): string | undefined {
-  const target = normalizeText(filename);
-
-  const found = Object.entries(categoryImages).find(
-    ([path]) => {
-      const basename =
-        path.split("/").pop() ?? path;
-
-      return normalizeText(basename) === target;
-    },
+  return resolveWebpFirst(
+    filename,
   );
-
-  return found?.[1];
 }
 
 /* ============================================================
@@ -283,7 +432,8 @@ function getCategorySearchTerms(
       ...aliases,
     ]);
 
-  const terms = matchingGroups.flat();
+  const terms =
+    matchingGroups.flat();
 
   return terms.length
     ? [
@@ -302,22 +452,60 @@ function getCategoryImages(
   categoryTitle: string,
 ): string[] {
   const searchTerms =
-    getCategorySearchTerms(categoryTitle);
+    getCategorySearchTerms(
+      categoryTitle,
+    );
 
-  const matches = Object.entries(
-    categoryImages,
-  )
-    .filter(([path]) => {
-      const normalizedPath =
-        normalizeText(path);
+  const matchingEntries =
+    imageEntries.filter(
+      ([path]) => {
+        const normalizedPath =
+          normalizeText(path);
 
-      return searchTerms.some((term) =>
-        normalizedPath.includes(term),
-      );
-    })
-    .map(([, image]) => image);
+        return searchTerms.some(
+          (term) =>
+            normalizedPath.includes(
+              term,
+            ),
+        );
+      },
+    );
 
-  return [...new Set(matches)];
+  /*
+   * WEBP FIRST
+   *
+   * Keep WebP before original formats.
+   */
+
+  const sortedEntries =
+    matchingEntries.sort(
+      ([a], [b]) => {
+        const aWebp =
+          isWebpPath(a);
+        const bWebp =
+          isWebpPath(b);
+
+        if (aWebp && !bWebp) {
+          return -1;
+        }
+
+        if (!aWebp && bWebp) {
+          return 1;
+        }
+
+        return a.localeCompare(
+          b,
+        );
+      },
+    );
+
+  return [
+    ...new Set(
+      sortedEntries.map(
+        ([, image]) => image,
+      ),
+    ),
+  ];
 }
 
 /* ============================================================
@@ -327,21 +515,7 @@ function getCategoryImages(
 function resolveImage(
   path: string,
 ): string | undefined {
-  const target = normalizeText(path);
-
-  const found = Object.entries(categoryImages).find(
-    ([sourcePath]) => {
-      const normalizedSource =
-        normalizeText(sourcePath);
-
-      return (
-        normalizedSource === target ||
-        normalizedSource.endsWith(target)
-      );
-    },
-  );
-
-  return found?.[1];
+  return resolveWebpFirst(path);
 }
 
 /* ============================================================
@@ -455,19 +629,49 @@ function getLakeImages(
   const normalizedTerms =
     terms.map(normalizeText);
 
+  const matches =
+    imageEntries.filter(
+      ([path]) => {
+        const normalizedPath =
+          normalizeText(path);
+
+        return normalizedTerms.some(
+          (term) =>
+            normalizedPath.includes(
+              term,
+            ),
+        );
+      },
+    );
+
+  /*
+   * WEBP FIRST
+   */
+
+  matches.sort(
+    ([a], [b]) => {
+      const aWebp =
+        isWebpPath(a);
+      const bWebp =
+        isWebpPath(b);
+
+      if (aWebp && !bWebp) {
+        return -1;
+      }
+
+      if (!aWebp && bWebp) {
+        return 1;
+      }
+
+      return a.localeCompare(b);
+    },
+  );
+
   return [
     ...new Set(
-      Object.entries(categoryImages)
-        .filter(([path]) => {
-          const normalizedPath =
-            normalizeText(path);
-
-          return normalizedTerms.some(
-            (term) =>
-              normalizedPath.includes(term),
-          );
-        })
-        .map(([, image]) => image),
+      matches.map(
+        ([, image]) => image,
+      ),
     ),
   ];
 }
@@ -484,17 +688,23 @@ function getLakeVideos(
 
   return [
     ...new Set(
-      Object.entries(categoryVideos)
+      Object.entries(
+        categoryVideos,
+      )
         .filter(([path]) => {
           const normalizedPath =
             normalizeText(path);
 
           return normalizedTerms.some(
             (term) =>
-              normalizedPath.includes(term),
+              normalizedPath.includes(
+                term,
+              ),
           );
         })
-        .map(([, video]) => video),
+        .map(
+          ([, video]) => video,
+        ),
     ),
   ];
 }
@@ -520,38 +730,37 @@ const resolvedLakeProjects =
    ROUTE
    ============================================================ */
 
-export const Route = createFileRoute(
-  "/",
-)({
-  head: () => ({
-    meta: [
-      {
-        title:
-          "Kalam Nation First Trust — Nation First. Humanity Always.",
-      },
+export const Route =
+  createFileRoute("/")({
+    head: () => ({
+      meta: [
+        {
+          title:
+            "Kalam Nation First Trust — Nation First. Humanity Always.",
+        },
 
-      {
-        name: "description",
-        content:
-          "Kalam Nation First Trust works with communities to restore nature, support people, empower youth and create meaningful social impact.",
-      },
+        {
+          name: "description",
+          content:
+            "Kalam Nation First Trust works with communities to restore nature, support people, empower youth and create meaningful social impact.",
+        },
 
-      {
-        property: "og:title",
-        content:
-          "Kalam Nation First Trust — Nation First. Humanity Always.",
-      },
+        {
+          property: "og:title",
+          content:
+            "Kalam Nation First Trust — Nation First. Humanity Always.",
+        },
 
-      {
-        property: "og:description",
-        content:
-          "Community-driven action for people, nature and a stronger future.",
-      },
-    ],
-  }),
+        {
+          property: "og:description",
+          content:
+            "Community-driven action for people, nature and a stronger future.",
+        },
+      ],
+    }),
 
-  component: Home,
-});
+    component: Home,
+  });
 
 /* ============================================================
    HOME
@@ -574,9 +783,13 @@ function Home() {
 
         resolvedImage:
           images[0] ??
+          resolveWebpFirst(
+            programme.image,
+          ) ??
           programme.image,
 
-        categoryImages: images,
+        categoryImages:
+          images,
       };
     });
 
