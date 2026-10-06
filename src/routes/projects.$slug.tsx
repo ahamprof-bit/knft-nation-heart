@@ -43,14 +43,16 @@ const imageModules = import.meta.glob(
   "/src/assets/**/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}",
   {
     eager: true,
+    query: "?url",
     import: "default",
   },
 ) as Record<string, string>;
 
 const videoModules = import.meta.glob(
-  "/src/assets/**/*.{mp4,MP4,webm,WEBM}",
+  "/src/assets/**/*.{mp4,MP4,webm,WEBM,mov,MOV}",
   {
     eager: true,
+    query: "?url",
     import: "default",
   },
 ) as Record<string, string>;
@@ -63,7 +65,10 @@ function normalizePath(path: string) {
   return path
     .toLowerCase()
     .replace(/\\/g, "/")
-    .replace(/\s+/g, " ");
+    .replace(/[–—]/g, "-")
+    .replace(/[^a-z0-9/.-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /* ============================================================
