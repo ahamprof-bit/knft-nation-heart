@@ -29,24 +29,10 @@ import {
 } from "@/components/ui-kit";
 
 /* ============================================================
-   IMAGE + VIDEO LIBRARY
+   GOOGLE DRIVE MEDIA
    ============================================================ */
 
-const imageModules = import.meta.glob(
-  "/src/assets/**/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}",
-  {
-    eager: true,
-    import: "default",
-  },
-) as Record<string, string>;
-
-const videoModules = import.meta.glob(
-  "/src/assets/**/*.{mp4,MP4,webm,WEBM}",
-  {
-    eager: true,
-    import: "default",
-  },
-) as Record<string, string>;
+import { driveMedia } from "@/data/driveMedia";
 
 /* ============================================================
    HELPERS
@@ -56,74 +42,87 @@ function normalizePath(path: string) {
   return path
     .toLowerCase()
     .replace(/\\/g, "/")
-    .replace(/\s+/g, " ");
+    .replace(/[–—]/g, "-")
+    .replace(/[^a-z0-9/.-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
-
-/* ============================================================
-   MEDIA OBJECTS
-   ============================================================ */
-
-const allImages = Object.entries(imageModules).map(
-  ([path, src]) => ({
-    path: normalizePath(path),
-    src,
-  }),
-);
-
-const allVideos = Object.entries(videoModules).map(
-  ([path, src]) => ({
-    path: normalizePath(path),
-    src,
-  }),
-);
-
-/* ============================================================
-   UNIQUE
-   ============================================================ */
 
 function unique(items: string[]) {
   return [...new Set(items)];
 }
 
 /* ============================================================
-   FIND IMAGES
+   DRIVE MEDIA COLLECTIONS
+   ============================================================ */
+
+const waterImages = [
+  ...driveMedia.waterRestoration.aadurMalavanthangalLake,
+  ...driveMedia.waterRestoration.erumananthangalLake,
+  ...driveMedia.waterRestoration.inspectionPeoples,
+  ...driveMedia.waterRestoration.muthampalayamLakes,
+];
+
+const driveCategoryImages: Record<string, string[]> = {
+  "water restoration": waterImages,
+  "environment biodiversity": driveMedia.treePlantation,
+  "disaster relief": driveMedia.disasterRelief,
+  "blood donation": driveMedia.bloodDonation,
+  "poverty hunger": [],
+  "youth empowerment": [],
+  education: driveMedia.education,
+  "sports traditional": [
+    ...driveMedia.sports.malkhamb,
+    ...driveMedia.sports.karate,
+    ...driveMedia.sports.running,
+  ],
+  "community development": driveMedia.projectAndImpact,
+  "career support": driveMedia.careerSupport,
+  "tree plantation": driveMedia.treePlantation,
+};
+
+/* ============================================================
+   FIND IMAGES — GOOGLE DRIVE ONLY
    ============================================================ */
 
 function findImages(terms: string[]) {
-  const normalizedTerms = terms.map((term) =>
-    normalizePath(term),
-  );
+  const normalized = terms.map(normalizePath).filter(Boolean);
 
-  return unique(
-    allImages
-      .filter(({ path }) =>
-        normalizedTerms.some((term) =>
-          path.includes(term),
-        ),
-      )
-      .map(({ src }) => src),
-  );
+  const matched: string[] = [];
+
+  const has = (...words: string[]) =>
+    normalized.some((term) =>
+      words.some((word) => term.includes(word)),
+    );
+
+  if (has("water", "lake", "pond", "restoration")) {
+    matched.push(...driveCategoryImages["water restoration"]);
+  } else if (has("environment", "biodiversity", "nature", "tree", "plantation", "forest")) {
+    matched.push(...driveCategoryImages["environment biodiversity"]);
+  } else if (has("disaster", "relief", "humanitarian", "flood", "emergency")) {
+    matched.push(...driveCategoryImages["disaster relief"]);
+  } else if (has("blood", "donation")) {
+    matched.push(...driveCategoryImages["blood donation"]);
+  } else if (has("education", "school", "student", "learning")) {
+    matched.push(...driveCategoryImages.education);
+  } else if (has("sports", "traditional", "malkhamb", "mallakhamb", "karate", "running")) {
+    matched.push(...driveCategoryImages["sports traditional"]);
+  } else if (has("community", "development", "rural")) {
+    matched.push(...driveCategoryImages["community development"]);
+  } else if (has("career", "employment", "job", "skill")) {
+    matched.push(...driveCategoryImages["career support"]);
+  } else if (has("poverty", "hunger", "food", "feeding")) {
+    matched.push(...driveCategoryImages["poverty hunger"]);
+  } else if (has("youth", "empowerment", "leadership", "young")) {
+    matched.push(...driveCategoryImages["youth empowerment"]);
+  }
+
+  return unique(matched);
 }
 
 /* ============================================================
-   FIND VIDEOS
+   FIND VIDEOS — GOOGLE DRIVE ONLY
    ============================================================ */
-
-function findVideos(terms: string[]) {
-  const normalizedTerms = terms.map((term) =>
-    normalizePath(term),
-  );
-
-  return unique(
-    allVideos
-      .filter(({ path }) =>
-        normalizedTerms.some((term) =>
-          path.includes(term),
-        ),
-      )
-      .map(({ src }) => src),
-  );
-}
 
 /* ============================================================
    CATEGORY ICONS
@@ -180,81 +179,26 @@ function CategoryIcon({
 
 function ProgrammeMedia({
   image,
-  video,
   title,
 }: {
   image?: string;
-  video?: string;
   title: string;
 }) {
-  /* ==========================================================
-     IMAGE
-     ALWAYS 9:16
-     ========================================================== */
+  if (!image) return null;
 
-  if (image) {
-    return (
-      <div className="relative flex w-full justify-center overflow-hidden bg-muted">
-        <div className="aspect-[9/16] w-full overflow-hidden">
-          <img
-            src={image}
-            alt={title}
-            className="
-              h-full
-              w-full
-              object-cover
-              transition-transform
-              duration-700
-              group-hover:scale-105
-            "
-            loading="lazy"
-            decoding="async"
-          />
-        </div>
+  return (
+    <div className="relative w-full overflow-hidden bg-muted">
+      <div className="aspect-[16/9] w-full overflow-hidden">
+        <img
+          src={image}
+          alt={title}
+          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+          loading="lazy"
+          decoding="async"
+        />
       </div>
-    );
-  }
-
-  /* ==========================================================
-     VIDEO
-     ALWAYS 16:9
-     ========================================================== */
-
-  if (video) {
-    return (
-      <div className="relative w-full overflow-hidden bg-black">
-        <div className="aspect-video w-full">
-          <video
-            src={video}
-            className="h-full w-full object-contain"
-            controls
-            playsInline
-            preload="metadata"
-          />
-
-          <span
-            className="
-              absolute
-              right-3
-              top-3
-              rounded-full
-              bg-black/70
-              px-3
-              py-1
-              text-xs
-              font-medium
-              text-white
-              backdrop-blur
-            "
-          >
-            Video
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  return null;
+    </div>
+  );
 }
 
 /* ============================================================
@@ -312,16 +256,13 @@ function OurWork() {
       <Section>
         <SectionHeading
           title="Focus areas"
-          subtitle="Explore each KNFT programme using its own dedicated images, videos and content."
+          subtitle="Explore each KNFT programme using its own dedicated Drive image and programme content."
         />
 
         <Stagger className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {workAreas.map((area) => {
             const images = findImages(area.mediaTerms);
-            const videos = findVideos(area.mediaTerms);
-
             const previewImage = images[0];
-            const previewVideo = videos[0];
 
             return (
               <StaggerItem key={area.slug}>
@@ -344,40 +285,11 @@ function OurWork() {
                       MEDIA
                   ================================================== */}
 
-                  {(previewImage || previewVideo) && (
+                  {previewImage && (
                     <ProgrammeMedia
                       image={previewImage}
-                      video={previewVideo}
                       title={area.title}
                     />
-                  )}
-
-                  {/* ==================================================
-                      MEDIA COUNT
-                  ================================================== */}
-
-                  {images.length > 0 && (
-                    <div className="-mt-12 relative z-10 px-3">
-                      <div className="flex justify-end">
-                        <div
-                          className="
-                            rounded-full
-                            bg-black/70
-                            px-3
-                            py-1.5
-                            text-xs
-                            font-medium
-                            text-white
-                            backdrop-blur-md
-                          "
-                        >
-                          {images.length}{" "}
-                          {images.length === 1
-                            ? "photo"
-                            : "photos"}
-                        </div>
-                      </div>
-                    </div>
                   )}
 
                   {/* ==================================================
@@ -516,43 +428,30 @@ function OurWork() {
           </Reveal>
 
           {/* ======================================================
-              WATER RESTORATION IMAGES
-              ALL IMAGES = 9:16
+              WATER RESTORATION IMAGE
+              SINGLE THUMBNAIL — NO VIDEO / NO IMAGE GRID
           ====================================================== */}
+          <Reveal delay={0.1}>
+            {(() => {
+              const images = findImages(["01 water restoration"]);
+              const image = images[1] ?? images[0];
 
-          <Reveal
-            delay={0.1}
-            className="grid grid-cols-2 gap-4"
-          >
-            {findImages(["01 water restoration"])
-              .slice(0, 4)
-              .map((image, index) => (
-                <div
-                  key={`${image}-${index}`}
-                  className="
-                    group
-                    overflow-hidden
-                    rounded-2xl
-                  "
-                >
-                  <div className="aspect-[9/16] w-full">
+              if (!image) return null;
+
+              return (
+                <div className="group overflow-hidden rounded-2xl">
+                  <div className="aspect-[16/10] w-full overflow-hidden">
                     <img
                       src={image}
-                      alt={`KNFT water restoration ${index + 1}`}
-                      className="
-                        h-full
-                        w-full
-                        object-cover
-                        transition-transform
-                        duration-700
-                        group-hover:scale-105
-                      "
+                      alt="KNFT water restoration"
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                       loading="lazy"
                       decoding="async"
                     />
                   </div>
                 </div>
-              ))}
+              );
+            })()}
           </Reveal>
         </div>
       </Section>

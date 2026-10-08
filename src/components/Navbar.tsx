@@ -4,7 +4,9 @@ import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { navLinks } from "@/data/siteConfig";
 import { BtnLink } from "./ui-kit";
-import logo from "@/assets/knft-logo.png.jpg";
+
+const logo =
+  "https://drive.google.com/thumbnail?id=1pM4NvpqzJ3rY9wrHVP97GA9aF3g_CJLc&sz=w500";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
@@ -40,7 +42,6 @@ export function Navbar() {
       }`}
     >
       <div className="mx-auto flex h-[76px] w-full max-w-7xl items-center gap-4 px-5 sm:px-8">
-        
         {/* Logo + Organization Name */}
         <Link
           to="/"

@@ -26,6 +26,60 @@ import {
 
 
 /* ============================================================
+   SAFE DRIVE IMAGE
+   ------------------------------------------------------------
+   Keeps the existing UI intact while preventing broken-image
+   icons / alt text when a Google Drive image is unavailable.
+   It tries the supplied fallback sources in order and renders
+   nothing if every source fails.
+   ============================================================ */
+
+type SafeImageProps = ImgHTMLAttributes<HTMLImageElement> & {
+  sources?: string[];
+};
+
+function SafeImage({
+  src,
+  sources = [],
+  alt = "",
+  onError,
+  ...props
+}: SafeImageProps) {
+  const candidates = [
+    src,
+    ...sources,
+  ].filter(
+    (value, index, list): value is string =>
+      Boolean(value) && list.indexOf(value) === index,
+  );
+
+  const [sourceIndex, setSourceIndex] = useState(0);
+
+  const currentSrc = candidates[sourceIndex];
+
+  if (!currentSrc) {
+    return null;
+  }
+
+  return (
+    <img
+      {...props}
+      src={currentSrc}
+      alt={alt}
+      onError={(event) => {
+        onError?.(event);
+
+        setSourceIndex((current) => {
+          const next = current + 1;
+          return next < candidates.length ? next : candidates.length;
+        });
+      }}
+    />
+  );
+}
+
+
+/* ============================================================
    DRIVE MEDIA GROUPS
    ============================================================ */
 
@@ -280,51 +334,6 @@ const lakeProjects = [
 ];
 
 const resolvedLakeProjects = lakeProjects;
-
-/* ============================================================
-   SAFE DRIVE IMAGE
-   ------------------------------------------------------------
-   If a Drive image fails, try the next Drive image.
-   If all candidates fail, render nothing instead of showing
-   broken-image icons or browser alt text.
-   ============================================================ */
-
-type SafeImageProps = ImgHTMLAttributes<HTMLImageElement> & {
-  sources?: string[];
-};
-
-function SafeImage({
-  src,
-  sources = [],
-  alt = "",
-  onError,
-  ...props
-}: SafeImageProps) {
-  const candidates = [src, ...sources].filter(
-    (value): value is string => Boolean(value),
-  );
-
-  const [candidateIndex, setCandidateIndex] = useState(0);
-
-  if (
-    candidates.length === 0 ||
-    candidateIndex >= candidates.length
-  ) {
-    return null;
-  }
-
-  return (
-    <img
-      {...props}
-      src={candidates[candidateIndex]}
-      alt={alt}
-      onError={(event) => {
-        onError?.(event);
-        setCandidateIndex((current) => current + 1);
-      }}
-    />
-  );
-}
 
 /* ============================================================
    ROUTE
@@ -972,248 +981,6 @@ function Home() {
             Explore Full Gallery
             <ArrowRight className="h-4 w-4" />
           </BtnLink>
-        </div>
-      </Section>
-
-      {/* ====================================================
-          FEATURED PROJECTS
-      ==================================================== */}
-
-      <Section tone="muted">
-        <SectionHeading
-          eyebrow="Featured Projects"
-          title="From intention to action."
-          subtitle="Explore some of the projects and initiatives that represent KNFT's work on the ground."
-        />
-
-        <Stagger className="mt-12 grid gap-6 md:grid-cols-2">
-          {featuredProjectMedia.map(
-            ({ project, images }, index) => (
-              <StaggerItem
-                key={project.slug}
-              >
-                <article className="surface-card flex h-full flex-col overflow-hidden rounded-[1.75rem]">
-                  <div className="relative overflow-hidden">
-                    {images.length > 0 ? (
-                      <SafeImage
-                        src={images[0]}
-                        sources={images.slice(1)}
-                        alt=""
-                        className="aspect-[16/9] w-full object-cover transition-transform duration-700 hover:scale-105"
-                        loading="lazy"
-                      />
-                    ) : null}
-
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                  </div>
-
-                  <div className="flex flex-1 flex-col p-7">
-                    <h3 className="text-2xl font-semibold">
-                      {
-                        project.title
-                      }
-                    </h3>
-
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {project.highlights.map(
-                        (
-                          highlight,
-                        ) => (
-                          <span
-                            key={
-                              highlight
-                            }
-                            className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground"
-                          >
-                            {
-                              highlight
-                            }
-                          </span>
-                        ),
-                      )}
-                    </div>
-
-                    <div className="mt-7">
-                      <BtnLink
-                        to="/projects/$slug"
-                        params={
-                          {
-                            slug:
-                              project.slug,
-                          } as any
-                        }
-                        variant="outline"
-                        size="sm"
-                      >
-                        View Project
-                        <ArrowRight className="h-4 w-4" />
-                      </BtnLink>
-                    </div>
-                  </div>
-                </article>
-              </StaggerItem>
-            ),
-          )}
-        </Stagger>
-
-        {/* ==================================================
-            LAKE RESTORATION
-        ================================================== */}
-
-        <div className="mt-16 border-t border-border pt-12">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-              Water Restoration
-            </p>
-
-            <h3 className="mt-3 text-2xl font-semibold sm:text-3xl">
-              Lake Restoration
-              Projects
-            </h3>
-
-            <p className="mt-3 text-sm leading-7 text-muted-foreground">
-              Explore lake restoration work documented through project photos,
-              field activities and available video footage.
-            </p>
-          </div>
-
-          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {resolvedLakeProjects
-              .filter((lake) => lake.images.length > 0)
-              .map((lake, index) => {
-                const coverImage = lake.images[0];
-
-                return (
-                  <Reveal
-                    key={lake.name}
-                    delay={
-                      index * 0.03
-                    }
-                  >
-                    <article className="surface-card group flex h-full flex-col overflow-hidden rounded-[1.75rem]">
-                      <div className="relative aspect-[16/10] overflow-hidden">
-                        <SafeImage
-                          src={coverImage}
-                          sources={lake.images}
-                          alt=""
-                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                          loading="lazy"
-                          decoding="async"
-                        />
-
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-
-                        <div className="absolute left-5 right-5 top-5 flex items-center justify-between gap-2">
-                          <span className="rounded-full bg-black/60 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white backdrop-blur-md">
-                            Lake Project
-                          </span>
-
-                          {lake.images
-                            .length >
-                            0 && (
-                            <span className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-primary">
-                              {
-                                lake
-                                  .images
-                                  .length
-                              }{" "}
-                              photos
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="absolute bottom-5 left-5 right-5">
-                          <h4 className="text-2xl font-semibold text-white">
-                            {lake.name}
-                          </h4>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-1 flex-col p-6">
-                        <p className="text-sm leading-7 text-muted-foreground">
-                          {
-                            lake.description
-                          }
-                        </p>
-
-                        {lake.images
-                          .length >
-                          1 && (
-                          <div className="mt-5 grid grid-cols-4 gap-2">
-                            {lake.images
-                              .slice(
-                                0,
-                                4,
-                              )
-                              .map(
-                                (
-                                  image,
-                                  imageIndex,
-                                ) => (
-                                  <div
-                                    key={`${lake.name}-${imageIndex}`}
-                                    className="overflow-hidden rounded-xl"
-                                  >
-                                    <SafeImage
-                                      src={image}
-                                      sources={lake.images.slice(imageIndex + 1)}
-                                      alt=""
-                                      className="aspect-square w-full object-cover transition-transform duration-500 hover:scale-110"
-                                      loading="lazy"
-                                    />
-                                  </div>
-                                ),
-                              )}
-                          </div>
-                        )}
-
-                        {lake.videos
-                          .length >
-                          0 && (
-                          <div className="mt-5 overflow-hidden rounded-xl border border-border bg-muted/40">
-                            <video
-                              src={
-                                lake
-                                  .videos[0]
-                              }
-                              className="aspect-video w-full object-cover"
-                              controls
-                              muted
-                              playsInline
-                              preload="metadata"
-                            />
-                          </div>
-                        )}
-
-                        <div className="mt-6">
-                          <BtnLink
-                            to="/our-work"
-                            variant="outline"
-                            size="sm"
-                          >
-                            Explore Water
-                            Restoration
-                            <ArrowRight className="h-4 w-4" />
-                          </BtnLink>
-                        </div>
-                      </div>
-                    </article>
-                  </Reveal>
-                );
-              },
-            )}
-          </div>
-
-          <div className="mt-10 flex justify-center">
-            <BtnLink
-              to="/our-work"
-              variant="outline"
-            >
-              View All Water
-              Restoration Work
-              <ArrowRight className="h-4 w-4" />
-            </BtnLink>
-          </div>
         </div>
       </Section>
 

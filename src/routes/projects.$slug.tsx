@@ -14,6 +14,8 @@ import {
   type Project,
 } from "@/data/projects";
 
+import { driveMedia } from "@/data/driveMedia";
+
 import {
   Reveal,
   Stagger,
@@ -28,130 +30,496 @@ import {
 } from "@/components/ui-kit";
 
 /* ============================================================
-   ASSET LIBRARY
+   GOOGLE DRIVE MEDIA
+   ============================================================
 
-   IMPORTANT:
-   Each project uses ONLY its own mediaTerms.
+   IMPORTANT
+   ----------
+   Local import.meta.glob has been removed.
 
-   MEDIA FORMAT:
-   - Photos        -> 9:16
-   - Local videos  -> 9:16
-   - YouTube       -> 9:16
+   All available project media comes from:
+     src/data/driveMedia.ts
+
+   MEDIA RATIO
+   -----------
+   Photos  -> 9:16
+   Videos  -> 9:16
+   YouTube -> 9:16
+
+   IMPORTANT
+   -----------
+   We DO NOT reuse another project's image when a project
+   does not have its own mapped Drive image.
+
+   This prevents the same lake thumbnail appearing for:
+   Kakuppam
+   Koliyanur
+   Murukkeri
+   etc.
+
    ============================================================ */
 
-const imageModules = import.meta.glob(
-  "/src/assets/**/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}",
-  {
-    eager: true,
-    query: "?url",
-    import: "default",
-  },
-) as Record<string, string>;
-
-const videoModules = import.meta.glob(
-  "/src/assets/**/*.{mp4,MP4,webm,WEBM,mov,MOV}",
-  {
-    eager: true,
-    query: "?url",
-    import: "default",
-  },
-) as Record<string, string>;
 
 /* ============================================================
-   NORMALISE
+   HELPERS
    ============================================================ */
 
-function normalizePath(path: string) {
-  return path
+function normalizeText(value: string) {
+  return value
     .toLowerCase()
-    .replace(/\\/g, "/")
     .replace(/[–—]/g, "-")
-    .replace(/[^a-z0-9/.-]+/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-/* ============================================================
-   ALL MEDIA
-   ============================================================ */
-
-const allImages = Object.entries(imageModules).map(
-  ([path, src]) => ({
-    path: normalizePath(path),
-    src,
-  }),
-);
-
-const allVideos = Object.entries(videoModules).map(
-  ([path, src]) => ({
-    path: normalizePath(path),
-    src,
-  }),
-);
-
-/* ============================================================
-   UNIQUE
-   ============================================================ */
 
 function unique(items: string[]) {
-  return [...new Set(items)];
+  return [...new Set(items.filter(Boolean))];
 }
+
+
+/* ============================================================
+   WATER RESTORATION MEDIA
+   ============================================================ */
+
+/*
+ * These are the water-restoration folders that are actually
+ * mapped in driveMedia.ts.
+ */
+
+const aaduMalavanthangalImages =
+  driveMedia.waterRestoration
+    .aadurMalavanthangalLake ?? [];
+
+const erumananthangalImages =
+  driveMedia.waterRestoration
+    .erumananthangalLake ?? [];
+
+const muthampalayamImages =
+  driveMedia.waterRestoration
+    .muthampalayamLakes ?? [];
+
+const inspectionImages =
+  driveMedia.waterRestoration
+    .inspectionPeoples ?? [];
+
+
+/* ============================================================
+   WATER VIDEOS
+   ============================================================ */
+
+const waterVideos = unique([
+  driveMedia.waterRestoration
+    .generalLakeHeroSectionVideoVertical,
+
+  ...driveMedia.waterRestoration
+    .heroSectionVideosToPlay,
+]);
+
+
+/* ============================================================
+   CATEGORY MEDIA
+   ============================================================ */
+
+const categoryImages: Record<string, string[]> = {
+  "water restoration": unique([
+    ...aaduMalavanthangalImages,
+    ...erumananthangalImages,
+    ...muthampalayamImages,
+    ...inspectionImages,
+  ]),
+
+  "environment biodiversity": unique([
+    ...driveMedia.treePlantation,
+  ]),
+
+  "disaster relief": unique([
+    ...driveMedia.disasterRelief,
+  ]),
+
+  "blood donation": unique([
+    ...driveMedia.bloodDonation,
+  ]),
+
+  education: unique([
+    ...driveMedia.education,
+  ]),
+
+  "sports traditional": unique([
+    ...driveMedia.sports.malkhamb,
+    ...driveMedia.sports.karate,
+    ...driveMedia.sports.running,
+  ]),
+
+  "community development": unique([
+    ...driveMedia.projectAndImpact,
+  ]),
+
+  "career support": unique([
+    ...driveMedia.careerSupport,
+  ]),
+
+  "tree plantation": unique([
+    ...driveMedia.treePlantation,
+  ]),
+};
+
 
 /* ============================================================
    FIND PROJECT IMAGES
    ============================================================ */
 
-function findImages(terms: string[]) {
+/*
+ * IMPORTANT
+ * ----------
+ * This function intentionally uses PROJECT-SPECIFIC matching.
+ *
+ * We do NOT do:
+ *
+ *   if water -> return all waterImages
+ *
+ * because that causes:
+ *
+ * Kakuppam
+ * Koliyanur
+ * Murukkeri
+ *
+ * to display the same unrelated thumbnail.
+ */
+
+function findImages(terms: string[]): string[] {
   if (!terms.length) {
     return [];
   }
 
-  const normalizedTerms = terms.map((term) =>
-    normalizePath(term),
-  );
+  const normalized = terms
+    .map(normalizeText)
+    .join(" ");
 
-  return unique(
-    allImages
-      .filter(({ path }) =>
-        normalizedTerms.some((term) =>
-          path.includes(term),
-        ),
-      )
-      .map(({ src }) => src),
-  );
+
+  /* ==========================================================
+     AADUR MALAVANTHANGAL
+     ========================================================== */
+
+  if (
+    normalized.includes("aadur") ||
+    normalized.includes("malavanthangal")
+  ) {
+    return unique(
+      aaduMalavanthangalImages,
+    );
+  }
+
+
+  /* ==========================================================
+     ERUMANANTHANGAL
+     ========================================================== */
+
+  if (
+    normalized.includes("erumananthangal")
+  ) {
+    return unique(
+      erumananthangalImages,
+    );
+  }
+
+
+  /* ==========================================================
+     MUTHAMPALAYAM
+     ========================================================== */
+
+  if (
+    normalized.includes("muthampalayam")
+  ) {
+    return unique(
+      muthampalayamImages,
+    );
+  }
+
+
+  /* ==========================================================
+     KAKUPPAM
+     ========================================================== */
+
+  if (
+    normalized.includes("kakuppam")
+  ) {
+    /*
+     * No separate Kakuppam Drive folder is currently mapped.
+     *
+     * IMPORTANT:
+     * Do NOT return generic waterImages here.
+     *
+     * This prevents an unrelated lake thumbnail from appearing.
+     */
+
+    return [];
+  }
+
+
+  /* ==========================================================
+     KOLIYANUR
+     ========================================================== */
+
+  if (
+    normalized.includes("koliyanur")
+  ) {
+    /*
+     * No separate Koliyanur Drive folder is currently mapped.
+     */
+
+    return [];
+  }
+
+
+  /* ==========================================================
+     MURUKKERI
+     ========================================================== */
+
+  if (
+    normalized.includes("murukkeri")
+  ) {
+    /*
+     * No separate Murukkeri Drive folder is currently mapped.
+     */
+
+    return [];
+  }
+
+
+  /* ==========================================================
+     TINDIVANAM THULKAR KULAM
+     ========================================================== */
+
+  if (
+    normalized.includes("tindivanam") ||
+    normalized.includes("thulkar") ||
+    normalized.includes("kulam")
+  ) {
+    return [];
+  }
+
+
+  /* ==========================================================
+     NANTHAN KAALVAAI
+     ========================================================== */
+
+  if (
+    normalized.includes("nanthan") ||
+    normalized.includes("kaalvaai")
+  ) {
+    return [];
+  }
+
+
+  /* ==========================================================
+     ENVIRONMENT / BIODIVERSITY
+     ========================================================== */
+
+  if (
+    normalized.includes("environment") ||
+    normalized.includes("biodiversity") ||
+    normalized.includes("nature") ||
+    normalized.includes("forest")
+  ) {
+    return unique(
+      categoryImages[
+        "environment biodiversity"
+      ] ?? [],
+    );
+  }
+
+
+  /* ==========================================================
+     TREE PLANTATION
+     ========================================================== */
+
+  if (
+    normalized.includes("tree plantation") ||
+    normalized.includes("tree planting") ||
+    normalized.includes("plantation")
+  ) {
+    return unique(
+      categoryImages[
+        "tree plantation"
+      ] ?? [],
+    );
+  }
+
+
+  /* ==========================================================
+     DISASTER RELIEF
+     ========================================================== */
+
+  if (
+    normalized.includes("disaster") ||
+    normalized.includes("relief") ||
+    normalized.includes("humanitarian") ||
+    normalized.includes("flood") ||
+    normalized.includes("emergency")
+  ) {
+    return unique(
+      categoryImages[
+        "disaster relief"
+      ] ?? [],
+    );
+  }
+
+
+  /* ==========================================================
+     BLOOD DONATION
+     ========================================================== */
+
+  if (
+    normalized.includes("blood") ||
+    normalized.includes("donation")
+  ) {
+    return unique(
+      categoryImages[
+        "blood donation"
+      ] ?? [],
+    );
+  }
+
+
+  /* ==========================================================
+     EDUCATION
+     ========================================================== */
+
+  if (
+    normalized.includes("education") ||
+    normalized.includes("school") ||
+    normalized.includes("student") ||
+    normalized.includes("learning")
+  ) {
+    return unique(
+      categoryImages.education ?? [],
+    );
+  }
+
+
+  /* ==========================================================
+     SPORTS
+     ========================================================== */
+
+  if (
+    normalized.includes("sport") ||
+    normalized.includes("traditional") ||
+    normalized.includes("malkhamb") ||
+    normalized.includes("mallakhamb") ||
+    normalized.includes("karate") ||
+    normalized.includes("running")
+  ) {
+    return unique(
+      categoryImages[
+        "sports traditional"
+      ] ?? [],
+    );
+  }
+
+
+  /* ==========================================================
+     COMMUNITY DEVELOPMENT
+     ========================================================== */
+
+  if (
+    normalized.includes("community") ||
+    normalized.includes("development") ||
+    normalized.includes("rural")
+  ) {
+    return unique(
+      categoryImages[
+        "community development"
+      ] ?? [],
+    );
+  }
+
+
+  /* ==========================================================
+     CAREER SUPPORT
+     ========================================================== */
+
+  if (
+    normalized.includes("career") ||
+    normalized.includes("employment") ||
+    normalized.includes("job") ||
+    normalized.includes("skill")
+  ) {
+    return unique(
+      categoryImages[
+        "career support"
+      ] ?? [],
+    );
+  }
+
+
+  /* ==========================================================
+     NO MATCH
+     ========================================================== */
+
+  return [];
 }
+
 
 /* ============================================================
    FIND PROJECT VIDEOS
    ============================================================ */
 
-function findVideos(terms: string[]) {
+/*
+ * IMPORTANT
+ * ----------
+ * Videos are also project-specific.
+ *
+ * We do NOT display the same water video on every lake page.
+ */
+
+function findVideos(terms: string[]): string[] {
   if (!terms.length) {
     return [];
   }
 
-  const normalizedTerms = terms.map((term) =>
-    normalizePath(term),
-  );
+  const normalized = terms
+    .map(normalizeText)
+    .join(" ");
 
-  return unique(
-    allVideos
-      .filter(({ path }) =>
-        normalizedTerms.some((term) =>
-          path.includes(term),
-        ),
-      )
-      .map(({ src }) => src),
-  );
+
+  /* ==========================================================
+     AADUR MALAVANTHANGAL
+     ========================================================== */
+
+  if (
+    normalized.includes("aadur") ||
+    normalized.includes("malavanthangal")
+  ) {
+    return unique(
+      waterVideos,
+    );
+  }
+
+
+  /*
+   * At the moment there is no confirmed project-specific
+   * Drive video mapping for the other lake projects.
+   *
+   * Returning [] prevents unrelated videos from appearing.
+   */
+
+  return [];
 }
+
 
 /* ============================================================
    ROUTE
    ============================================================ */
 
-export const Route = createFileRoute("/projects/$slug")({
+export const Route = createFileRoute(
+  "/projects/$slug",
+)({
   head: ({ params }) => {
-    const project = getProject(params.slug);
+    const project = getProject(
+      params.slug,
+    );
 
     return {
       meta: [
@@ -160,18 +528,21 @@ export const Route = createFileRoute("/projects/$slug")({
             ? `${project.title} — KNFT`
             : "Project — Kalam Nation First Trust",
         },
+
         {
           name: "description",
           content: project
             ? project.overview
             : "Explore Kalam Nation First Trust community initiatives and projects.",
         },
+
         {
           property: "og:title",
           content: project
             ? `${project.title} — KNFT`
             : "KNFT Project",
         },
+
         {
           property: "og:description",
           content: project
@@ -185,19 +556,20 @@ export const Route = createFileRoute("/projects/$slug")({
   component: ProjectDetail,
 });
 
+
 /* ============================================================
    PROJECT MEDIA
-
-   PRIORITY:
-
-   1. Local project video
-   2. Local project image
-   3. Project-specific YouTube
-
-   ALL MEDIA = 9:16
-
-   NO MEDIA FALLBACK
    ============================================================ */
+
+/*
+ * PRIORITY
+ *
+ * 1. Project-specific Google Drive video
+ * 2. Project-specific Google Drive image
+ * 3. Project-specific YouTube video
+ *
+ * NO WRONG MEDIA FALLBACK
+ */
 
 function ProjectMedia({
   project,
@@ -208,16 +580,18 @@ function ProjectMedia({
   images: string[];
   videos: string[];
 }) {
-  const localVideo = videos[0];
-  const localImage = images[0];
+  const projectVideo =
+    videos[0];
+
+  const projectImage =
+    images[0];
+
 
   /* ==========================================================
-     1. LOCAL PROJECT VIDEO
-
-     9:16
+     1. GOOGLE DRIVE PROJECT VIDEO
      ========================================================== */
 
-  if (localVideo) {
+  if (projectVideo) {
     return (
       <div
         className="
@@ -231,7 +605,7 @@ function ProjectMedia({
       >
         <div className="aspect-[9/16] w-full">
           <video
-            src={localVideo}
+            src={projectVideo}
             className="
               h-full
               w-full
@@ -250,13 +624,12 @@ function ProjectMedia({
     );
   }
 
-  /* ==========================================================
-     2. LOCAL PROJECT IMAGE
 
-     9:16
+  /* ==========================================================
+     2. GOOGLE DRIVE PROJECT IMAGE
      ========================================================== */
 
-  if (localImage) {
+  if (projectImage) {
     return (
       <div
         className="
@@ -270,7 +643,7 @@ function ProjectMedia({
       >
         <div className="aspect-[9/16] w-full">
           <img
-            src={localImage}
+            src={projectImage}
             alt={project.title}
             className="
               h-full
@@ -285,13 +658,14 @@ function ProjectMedia({
     );
   }
 
+
   /* ==========================================================
      3. PROJECT-SPECIFIC YOUTUBE
-
-     9:16
      ========================================================== */
 
-  const youtube = project.youtubeVideos?.[0];
+  const youtube =
+    project.youtubeVideos?.[0];
+
 
   if (youtube) {
     return (
@@ -364,13 +738,42 @@ function ProjectMedia({
     );
   }
 
-  return null;
+
+  /* ==========================================================
+     NO MEDIA
+     ========================================================== */
+
+  return (
+    <div
+      className="
+        flex
+        aspect-[9/16]
+        w-full
+        items-center
+        justify-center
+        rounded-3xl
+        bg-muted
+        p-8
+        text-center
+      "
+    >
+      <div>
+        <p className="text-sm font-semibold text-primary">
+          Project Media
+        </p>
+
+        <p className="mt-2 text-sm text-muted-foreground">
+          Media for this project will be added when its
+          dedicated Drive folder is mapped.
+        </p>
+      </div>
+    </div>
+  );
 }
+
 
 /* ============================================================
    YOUTUBE SECTION
-
-   ALL YOUTUBE VIDEOS = 9:16
    ============================================================ */
 
 function YouTubeSection({
@@ -378,11 +781,14 @@ function YouTubeSection({
 }: {
   project: Project;
 }) {
-  const videos = project.youtubeVideos ?? [];
+  const videos =
+    project.youtubeVideos ?? [];
+
 
   if (videos.length === 0) {
     return null;
   }
+
 
   return (
     <Section tone="muted">
@@ -392,7 +798,15 @@ function YouTubeSection({
         subtitle={`Videos related specifically to ${project.title}.`}
       />
 
-      <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div
+        className="
+          mt-10
+          grid
+          gap-6
+          sm:grid-cols-2
+          lg:grid-cols-3
+        "
+      >
         {videos.map((video) => (
           <div
             key={video.id}
@@ -403,10 +817,6 @@ function YouTubeSection({
               shadow-sm
             "
           >
-            {/* ==================================================
-                ALL YOUTUBE VIDEOS = 9:16
-            ================================================== */}
-
             <div className="relative aspect-[9/16] w-full">
               <iframe
                 src={`https://www.youtube.com/embed/${video.id}`}
@@ -431,10 +841,6 @@ function YouTubeSection({
               />
             </div>
 
-            {/* ==================================================
-                VIDEO TITLE
-            ================================================== */}
-
             <div
               className="
                 border-t
@@ -455,10 +861,9 @@ function YouTubeSection({
   );
 }
 
-/* ============================================================
-   WATER PROJECTS
 
-   RELATED PROJECT MEDIA = 9:16
+/* ============================================================
+   RELATED WATER PROJECTS
    ============================================================ */
 
 function RelatedWaterProjects({
@@ -466,13 +871,17 @@ function RelatedWaterProjects({
 }: {
   currentSlug: string;
 }) {
-  const related = getWaterProjects().filter(
-    (project) => project.slug !== currentSlug,
-  );
+  const related =
+    getWaterProjects().filter(
+      (project) =>
+        project.slug !== currentSlug,
+    );
+
 
   if (related.length === 0) {
     return null;
   }
+
 
   return (
     <Section>
@@ -482,21 +891,37 @@ function RelatedWaterProjects({
         subtitle="Explore other KNFT water restoration initiatives."
       />
 
-      <Stagger className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <Stagger
+        className="
+          mt-10
+          grid
+          gap-6
+          sm:grid-cols-2
+          lg:grid-cols-3
+        "
+      >
         {related.map((project) => {
-          const images = findImages(
-            project.mediaTerms,
-          );
+          const images =
+            findImages(
+              project.mediaTerms,
+            );
 
-          const videos = findVideos(
-            project.mediaTerms,
-          );
+          const videos =
+            findVideos(
+              project.mediaTerms,
+            );
 
-          const image = images[0];
-          const video = videos[0];
+          const image =
+            images[0];
+
+          const video =
+            videos[0];
+
 
           return (
-            <StaggerItem key={project.slug}>
+            <StaggerItem
+              key={project.slug}
+            >
               <article
                 className="
                   surface-card
@@ -509,13 +934,12 @@ function RelatedWaterProjects({
                   hover:shadow-lift
                 "
               >
-                {/* ==================================================
-                    RELATED MEDIA
 
-                    ALL = 9:16
+                {/* ==================================================
+                    MEDIA
                 ================================================== */}
 
-                {(image || video) && (
+                {image ? (
                   <div
                     className="
                       relative
@@ -527,44 +951,57 @@ function RelatedWaterProjects({
                     "
                   >
                     <div className="aspect-[9/16] w-full">
-                      {image ? (
-                        <img
-                          src={image}
-                          alt={project.title}
-                          className="
-                            h-full
-                            w-full
-                            object-cover
-                            transition-transform
-                            duration-700
-                            group-hover:scale-105
-                          "
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      ) : (
-                        <video
-                          src={video}
-                          className="
-                            h-full
-                            w-full
-                            object-cover
-                          "
-                          muted
-                          loop
-                          playsInline
-                          preload="metadata"
-                        />
-                      )}
+                      <img
+                        src={image}
+                        alt={project.title}
+                        className="
+                          h-full
+                          w-full
+                          object-cover
+                          transition-transform
+                          duration-700
+                          group-hover:scale-105
+                        "
+                        loading="lazy"
+                        decoding="async"
+                      />
                     </div>
                   </div>
-                )}
+                ) : video ? (
+                  <div
+                    className="
+                      relative
+                      flex
+                      w-full
+                      justify-center
+                      overflow-hidden
+                      bg-black
+                    "
+                  >
+                    <div className="aspect-[9/16] w-full">
+                      <video
+                        src={video}
+                        className="
+                          h-full
+                          w-full
+                          object-cover
+                        "
+                        muted
+                        loop
+                        playsInline
+                        preload="metadata"
+                      />
+                    </div>
+                  </div>
+                ) : null}
+
 
                 {/* ==================================================
                     CONTENT
                 ================================================== */}
 
                 <div className="p-5">
+
                   <p
                     className="
                       text-xs
@@ -577,9 +1014,11 @@ function RelatedWaterProjects({
                     Water Restoration
                   </p>
 
+
                   <h3 className="mt-2 text-lg font-semibold">
                     {project.title}
                   </h3>
+
 
                   <p
                     className="
@@ -596,6 +1035,7 @@ function RelatedWaterProjects({
                     {project.location}
                   </p>
 
+
                   <div className="mt-5">
                     <BtnLink
                       to="/projects/$slug"
@@ -610,6 +1050,7 @@ function RelatedWaterProjects({
                       <ArrowRight className="h-4 w-4" />
                     </BtnLink>
                   </div>
+
                 </div>
               </article>
             </StaggerItem>
@@ -620,14 +1061,19 @@ function RelatedWaterProjects({
   );
 }
 
+
 /* ============================================================
    DETAIL PAGE
    ============================================================ */
 
 function ProjectDetail() {
-  const { slug } = Route.useParams();
+  const { slug } =
+    Route.useParams();
 
-  const project = getProject(slug);
+
+  const project =
+    getProject(slug);
+
 
   /* ==========================================================
      NOT FOUND
@@ -656,20 +1102,26 @@ function ProjectDetail() {
     );
   }
 
+
   /* ==========================================================
      PROJECT MEDIA
      ========================================================== */
 
-  const images = findImages(
-    project.mediaTerms,
-  );
+  const images =
+    findImages(
+      project.mediaTerms,
+    );
 
-  const videos = findVideos(
-    project.mediaTerms,
-  );
+
+  const videos =
+    findVideos(
+      project.mediaTerms,
+    );
+
 
   return (
     <>
+
       {/* ======================================================
           HERO
       ====================================================== */}
@@ -679,6 +1131,7 @@ function ProjectDetail() {
         title={project.title}
         subtitle={project.overview}
       />
+
 
       {/* ======================================================
           MAIN PROJECT
@@ -693,6 +1146,7 @@ function ProjectDetail() {
             lg:items-start
           "
         >
+
           {/* ==================================================
               MEDIA
           ================================================== */}
@@ -704,7 +1158,6 @@ function ProjectDetail() {
               videos={videos}
             />
 
-            {/* Photo count */}
 
             {images.length > 0 && (
               <p className="mt-3 text-sm text-muted-foreground">
@@ -716,12 +1169,15 @@ function ProjectDetail() {
             )}
           </Reveal>
 
+
           {/* ==================================================
               BASIC INFO
           ================================================== */}
 
           <Reveal delay={0.1}>
+
             <div className="flex flex-wrap gap-2">
+
               <span
                 className="
                   rounded-full
@@ -736,6 +1192,7 @@ function ProjectDetail() {
                 {project.category}
               </span>
 
+
               <span
                 className="
                   rounded-full
@@ -749,11 +1206,21 @@ function ProjectDetail() {
               >
                 {project.status}
               </span>
+
             </div>
 
-            <h2 className="mt-5 text-3xl font-semibold leading-tight">
+
+            <h2
+              className="
+                mt-5
+                text-3xl
+                font-semibold
+                leading-tight
+              "
+            >
               {project.title}
             </h2>
+
 
             <p
               className="
@@ -770,10 +1237,14 @@ function ProjectDetail() {
               {project.location}
             </p>
 
-            {/* Highlights */}
+
+            {/* ==================================================
+                HIGHLIGHTS
+            ================================================== */}
 
             {project.highlights.length > 0 && (
               <ul className="mt-7 space-y-3">
+
                 {project.highlights.map(
                   (highlight) => (
                     <li
@@ -800,26 +1271,42 @@ function ProjectDetail() {
                     </li>
                   ),
                 )}
+
               </ul>
             )}
+
           </Reveal>
+
         </div>
       </Section>
+
 
       {/* ======================================================
           DETAILS
       ====================================================== */}
 
       <Section tone="muted">
+
         <SectionHeading
           title="About this initiative"
           subtitle={project.overview}
         />
 
+
         <div className="mt-10 grid gap-6 md:grid-cols-2">
+
           <Reveal>
             <article className="surface-card h-full rounded-2xl p-6">
-              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-primary">
+
+              <p
+                className="
+                  text-sm
+                  font-semibold
+                  uppercase
+                  tracking-[0.14em]
+                  text-primary
+                "
+              >
                 The Challenge
               </p>
 
@@ -830,12 +1317,23 @@ function ProjectDetail() {
               <p className="mt-4 leading-7 text-muted-foreground">
                 {project.challenge}
               </p>
+
             </article>
           </Reveal>
 
+
           <Reveal delay={0.05}>
             <article className="surface-card h-full rounded-2xl p-6">
-              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-primary">
+
+              <p
+                className="
+                  text-sm
+                  font-semibold
+                  uppercase
+                  tracking-[0.14em]
+                  text-primary
+                "
+              >
                 Our Action
               </p>
 
@@ -846,12 +1344,23 @@ function ProjectDetail() {
               <p className="mt-4 leading-7 text-muted-foreground">
                 {project.action}
               </p>
+
             </article>
           </Reveal>
 
+
           <Reveal delay={0.1}>
             <article className="surface-card h-full rounded-2xl p-6">
-              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-primary">
+
+              <p
+                className="
+                  text-sm
+                  font-semibold
+                  uppercase
+                  tracking-[0.14em]
+                  text-primary
+                "
+              >
                 Participation
               </p>
 
@@ -862,12 +1371,23 @@ function ProjectDetail() {
               <p className="mt-4 leading-7 text-muted-foreground">
                 {project.participation}
               </p>
+
             </article>
           </Reveal>
 
+
           <Reveal delay={0.15}>
             <article className="surface-card h-full rounded-2xl p-6">
-              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-primary">
+
+              <p
+                className="
+                  text-sm
+                  font-semibold
+                  uppercase
+                  tracking-[0.14em]
+                  text-primary
+                "
+              >
                 Impact
               </p>
 
@@ -878,79 +1398,126 @@ function ProjectDetail() {
               <p className="mt-4 leading-7 text-muted-foreground">
                 {project.impact}
               </p>
+
             </article>
           </Reveal>
+
         </div>
       </Section>
 
-      {/* ======================================================
-          LOCAL GALLERY
 
-          ALL PHOTOS = 9:16
+      {/* ======================================================
+          PROJECT GALLERY
+
+          IMPORTANT
+          ----------
+          First image = main project image.
+
+          Gallery starts from image #2.
+          This prevents duplicate first image.
       ====================================================== */}
 
-      {images.length > 0 && (
+      {images.length > 1 && (
         <Section>
+
           <SectionHeading
             eyebrow="Gallery"
             title={`${project.title} — Photos`}
             subtitle="Only media belonging to this project is shown here."
           />
 
-          <Stagger className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {images.map((image, index) => (
-              <StaggerItem
-                key={`${image}-${index}`}
-              >
-                <article className="group overflow-hidden rounded-2xl bg-muted">
-                  <div className="aspect-[9/16] w-full">
-                    <img
-                      src={image}
-                      alt={`${project.title} ${index + 1}`}
+
+          <Stagger
+            className="
+              mt-10
+              grid
+              grid-cols-2
+              gap-4
+              md:grid-cols-3
+              lg:grid-cols-4
+            "
+          >
+
+            {images
+              .slice(1)
+              .map(
+                (image, index) => (
+                  <StaggerItem
+                    key={`${image}-${index}`}
+                  >
+                    <article
                       className="
-                        h-full
-                        w-full
-                        object-cover
-                        transition-transform
-                        duration-700
-                        group-hover:scale-105
+                        group
+                        overflow-hidden
+                        rounded-2xl
+                        bg-muted
                       "
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
-                </article>
-              </StaggerItem>
-            ))}
+                    >
+
+                      <div className="aspect-[9/16] w-full">
+
+                        <img
+                          src={image}
+                          alt={`${project.title} ${
+                            index + 2
+                          }`}
+                          className="
+                            h-full
+                            w-full
+                            object-cover
+                            transition-transform
+                            duration-700
+                            group-hover:scale-105
+                          "
+                          loading="lazy"
+                          decoding="async"
+                        />
+
+                      </div>
+
+                    </article>
+                  </StaggerItem>
+                ),
+              )}
+
           </Stagger>
+
         </Section>
       )}
 
+
       {/* ======================================================
           YOUTUBE
-
-          ALL VIDEOS = 9:16
       ====================================================== */}
 
-      <YouTubeSection project={project} />
+      <YouTubeSection
+        project={project}
+      />
+
 
       {/* ======================================================
           RELATED WATER PROJECTS
       ====================================================== */}
 
-      {project.category === "Water Restoration" &&
+      {project.category ===
+        "Water Restoration" &&
         project.kind === "project" && (
           <RelatedWaterProjects
-            currentSlug={project.slug}
+            currentSlug={
+              project.slug
+            }
           />
         )}
 
+
       {/* ======================================================
-          BACK
+          BACK / NAVIGATION
       ====================================================== */}
 
       <Section tone="muted">
+
         <div className="flex flex-wrap gap-3">
+
           <BtnLink
             to="/our-work"
             variant="outline"
@@ -960,9 +1527,11 @@ function ProjectDetail() {
             Back to Our Work
           </BtnLink>
 
+
           {project.kind === "project" &&
             project.category ===
               "Water Restoration" && (
+
               <BtnLink
                 to="/projects/$slug"
                 params={{
@@ -974,9 +1543,13 @@ function ProjectDetail() {
 
                 <ArrowRight className="h-4 w-4" />
               </BtnLink>
+
             )}
+
         </div>
+
       </Section>
+
     </>
   );
 }
