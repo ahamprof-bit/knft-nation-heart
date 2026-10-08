@@ -19,8 +19,12 @@ import {
    GOOGLE DRIVE IMAGE HELPERS
    ============================================================ */
 
+/*
+ * Smaller thumbnail size reduces bandwidth and helps prevent
+ * Google Drive from throttling a large gallery.
+ */
 function driveImage(fileId: string) {
-  return `https://drive.google.com/thumbnail?id=${fileId}&sz=w2000`;
+  return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1200`;
 }
 
 function driveImageFallback(fileId: string) {
@@ -466,9 +470,9 @@ type YouTubeVideo = {
   aspect: "16:9" | "9:16";
 };
 
-/* ------------------------------------------------------------
+/* ============================================================
    16:9 VIDEOS
-   ------------------------------------------------------------ */
+   ============================================================ */
 
 const youtubeVideos16x9: YouTubeVideo[] = [
   {
@@ -503,9 +507,9 @@ const youtubeVideos16x9: YouTubeVideo[] = [
   },
 ];
 
-/* ------------------------------------------------------------
+/* ============================================================
    9:16 SHORTS
-   ------------------------------------------------------------ */
+   ============================================================ */
 
 const youtubeVideos9x16: YouTubeVideo[] = [
   {
@@ -559,7 +563,7 @@ const youtubeVideos9x16: YouTubeVideo[] = [
 ];
 
 /* ============================================================
-   YOUTUBE EMBED
+   YOUTUBE VIDEO CARD
    ============================================================ */
 
 function YouTubeVideoCard({
@@ -635,6 +639,9 @@ function GalleryImage({
   const [currentSrc, setCurrentSrc] =
     useState(src);
 
+  const [hasError, setHasError] =
+    useState(false);
+
   return (
     <div
       className="
@@ -646,7 +653,7 @@ function GalleryImage({
         bg-muted
       "
     >
-      {currentSrc && (
+      {!hasError && currentSrc ? (
         <>
           <img
             src={currentSrc}
@@ -668,6 +675,8 @@ function GalleryImage({
                 currentSrc !== fallbackSrc
               ) {
                 setCurrentSrc(fallbackSrc);
+              } else {
+                setHasError(true);
               }
             }}
           />
@@ -684,6 +693,21 @@ function GalleryImage({
             "
           />
         </>
+      ) : (
+        <div
+          className="
+            flex
+            h-full
+            w-full
+            items-center
+            justify-center
+            bg-muted
+          "
+        >
+          <span className="px-4 text-center text-xs text-muted-foreground">
+            Image unavailable
+          </span>
+        </div>
       )}
     </div>
   );
@@ -727,10 +751,23 @@ function Gallery() {
   const [active, setActive] =
     useState<GalleryCategory>("All");
 
+  /*
+   * IMPORTANT:
+   * Only 48 images are rendered initially.
+   * This prevents hundreds of Google Drive thumbnail
+   * requests from firing at the same time.
+   */
+  const [visibleCount, setVisibleCount] =
+    useState(48);
+
   const [lightbox, setLightbox] = useState<{
     src: string;
     caption: string;
   } | null>(null);
+
+  /* ==========================================================
+     FILTER ITEMS
+     ========================================================== */
 
   const items = useMemo(() => {
     if (active === "All") {
@@ -741,6 +778,40 @@ function Gallery() {
       (item) => item.category === active,
     );
   }, [active]);
+
+  /* ==========================================================
+     VISIBLE ITEMS
+     ========================================================== */
+
+  const visibleItems = useMemo(() => {
+    return items.slice(0, visibleCount);
+  }, [items, visibleCount]);
+
+  const hasMore = visibleCount < items.length;
+
+  /* ==========================================================
+     CATEGORY CHANGE
+     ========================================================== */
+
+  function handleCategoryChange(
+    category: GalleryCategory,
+  ) {
+    setActive(category);
+    setVisibleCount(48);
+  }
+
+  /* ==========================================================
+     LOAD MORE
+     ========================================================== */
+
+  function handleLoadMore() {
+    setVisibleCount((current) =>
+      Math.min(
+        current + 48,
+        items.length,
+      ),
+    );
+  }
 
   return (
     <>
@@ -759,12 +830,18 @@ function Gallery() {
       ====================================================== */}
 
       <Section>
+        {/* ====================================================
+            CATEGORY FILTERS
+        ==================================================== */}
+
         <div className="flex flex-wrap gap-2">
           {galleryCategories.map((category) => (
             <button
               key={category}
               type="button"
-              onClick={() => setActive(category)}
+              onClick={() =>
+                handleCategoryChange(category)
+              }
               className={`
                 rounded-full
                 border
@@ -786,12 +863,30 @@ function Gallery() {
           ))}
         </div>
 
+        {/* ====================================================
+            PHOTO COUNT
+        ==================================================== */}
+
         <p className="mt-5 text-sm text-muted-foreground">
-          {items.length}{" "}
+          Showing{" "}
+          <span className="font-semibold text-foreground">
+            {Math.min(
+              visibleCount,
+              items.length,
+            )}
+          </span>{" "}
+          of{" "}
+          <span className="font-semibold text-foreground">
+            {items.length}
+          </span>{" "}
           {items.length === 1
             ? "photo"
             : "photos"}
         </p>
+
+        {/* ====================================================
+            PHOTO GRID
+        ==================================================== */}
 
         <motion.div
           layout
@@ -804,67 +899,125 @@ function Gallery() {
           "
         >
           <AnimatePresence mode="popLayout">
-            {items.map((item, index) => {
-              const imageSrc = item.src;
+            {visibleItems.map(
+              (item, index) => {
+                const imageSrc = item.src;
 
-              return (
-                <motion.button
-                  key={`${item.id}-${index}`}
-                  layout
-                  type="button"
-                  onClick={() => {
-                    if (imageSrc) {
-                      setLightbox({
-                        src: imageSrc,
-                        caption:
-                          item.caption ||
-                          "KNFT Gallery",
-                      });
-                    }
-                  }}
-                  initial={{
-                    opacity: 0,
-                    scale: 0.96,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    scale: 1,
-                  }}
-                  exit={{
-                    opacity: 0,
-                    scale: 0.96,
-                  }}
-                  transition={{
-                    duration: 0.3,
-                  }}
-                  className="
-                    group
-                    rounded-xl
-                    text-left
-                    focus-visible:outline-none
-                    focus-visible:ring-2
-                    focus-visible:ring-ring
-                    focus-visible:ring-offset-2
-                  "
-                  aria-label="Open image"
-                >
-                  <GalleryImage
-                    src={imageSrc}
-                    fallbackSrc={
-                      "fallbackSrc" in item
-                        ? item.fallbackSrc
-                        : undefined
-                    }
-                    alt={
-                      item.caption ||
-                      "KNFT community activity"
-                    }
-                  />
-                </motion.button>
-              );
-            })}
+                return (
+                  <motion.button
+                    key={`${item.id}-${index}`}
+                    layout
+                    type="button"
+                    onClick={() => {
+                      if (imageSrc) {
+                        setLightbox({
+                          src: imageSrc,
+                          caption:
+                            item.caption ||
+                            "KNFT Gallery",
+                        });
+                      }
+                    }}
+                    initial={{
+                      opacity: 0,
+                      scale: 0.96,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      scale: 1,
+                    }}
+                    exit={{
+                      opacity: 0,
+                      scale: 0.96,
+                    }}
+                    transition={{
+                      duration: 0.25,
+                    }}
+                    className="
+                      group
+                      rounded-xl
+                      text-left
+                      focus-visible:outline-none
+                      focus-visible:ring-2
+                      focus-visible:ring-ring
+                      focus-visible:ring-offset-2
+                    "
+                    aria-label="Open image"
+                  >
+                    <GalleryImage
+                      src={imageSrc}
+                      fallbackSrc={
+                        "fallbackSrc" in item
+                          ? item.fallbackSrc
+                          : undefined
+                      }
+                      alt={
+                        item.caption ||
+                        "KNFT community activity"
+                      }
+                    />
+                  </motion.button>
+                );
+              },
+            )}
           </AnimatePresence>
         </motion.div>
+
+        {/* ====================================================
+            LOAD MORE
+        ==================================================== */}
+
+        {hasMore && (
+          <div className="mt-10 flex justify-center">
+            <button
+              type="button"
+              onClick={handleLoadMore}
+              className="
+                inline-flex
+                items-center
+                justify-center
+                rounded-full
+                border
+                border-primary
+                bg-primary
+                px-7
+                py-3
+                text-sm
+                font-semibold
+                text-primary-foreground
+                shadow-sm
+                transition-all
+                duration-200
+                hover:-translate-y-0.5
+                hover:bg-primary/90
+                hover:shadow-md
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-primary
+                focus-visible:ring-offset-2
+              "
+            >
+              Load More Photos
+            </button>
+          </div>
+        )}
+
+        {/* ====================================================
+            ALL PHOTOS LOADED
+        ==================================================== */}
+
+        {!hasMore &&
+          items.length > 48 && (
+            <div className="mt-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                All {items.length} photos loaded.
+              </p>
+            </div>
+          )}
+
+        {/* ====================================================
+            EMPTY STATE
+        ==================================================== */}
 
         {items.length === 0 && (
           <div
@@ -1020,6 +1173,8 @@ function Gallery() {
                 event.stopPropagation()
               }
             >
+              {/* CLOSE BUTTON */}
+
               <button
                 type="button"
                 onClick={() =>
@@ -1048,6 +1203,8 @@ function Gallery() {
               >
                 <X className="h-5 w-5" />
               </button>
+
+              {/* IMAGE */}
 
               <div
                 className="
