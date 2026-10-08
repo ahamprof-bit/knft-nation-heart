@@ -26,15 +26,54 @@ import {
 } from "@/components/ui-kit";
 
 /* ============================================================
-   SUBASREE IMAGES
+   SUBASREE GOOGLE DRIVE IMAGES
 ============================================================ */
 
-import subasreeImage1 from "@/assets/SPORTS/RUNNING/WhatsApp Image 2026-09-25 at 22.12.16.jpeg";
-import subasreeImage2 from "@/assets/SPORTS/RUNNING/WhatsApp Image 2026-09-25 at 22.12.16 (1).jpeg";
-import subasreeImage3 from "@/assets/SPORTS/RUNNING/WhatsApp Image 2026-09-25 at 22.12.16 (2).jpeg";
-import subasreeImage4 from "@/assets/SPORTS/RUNNING/WhatsApp Image 2026-09-25 at 22.12.17.jpeg";
-import subasreeImage5 from "@/assets/SPORTS/RUNNING/WhatsApp Image 2026-09-25 at 22.12.17 (1).jpeg";
-import subasreeImage6 from "@/assets/SPORTS/RUNNING/WhatsApp Image 2026-09-25 at 22.12.18.jpeg";
+/*
+ * Google Drive files are converted to thumbnail URLs.
+ *
+ * DO NOT use:
+ *
+ * https://drive.google.com/file/d/FILE_ID/view
+ *
+ * DO NOT use:
+ *
+ * https://drive.google.com/uc?export=view&id=FILE_ID
+ *
+ * We use:
+ *
+ * https://drive.google.com/thumbnail?id=FILE_ID&sz=w1600
+ *
+ * This is intended to return an image that can be used
+ * directly inside <img src="..." />.
+ */
+
+const subasreeImages = [
+  {
+    src: "https://drive.google.com/thumbnail?id=18ummt1i4WJYzLeSnbIaE-lPUGAvp-COW&sz=w1600",
+    alt: "Subasree running achievement 1",
+  },
+  {
+    src: "https://drive.google.com/thumbnail?id=19F8_3V1cwxV0Ox1rYGbRvP7hDlfQHlia&sz=w1600",
+    alt: "Subasree running achievement 2",
+  },
+  {
+    src: "https://drive.google.com/thumbnail?id=1G77lS31IEkVkpv0aLcLMni3EJ067cnV_&sz=w1600",
+    alt: "Subasree running achievement 3",
+  },
+  {
+    src: "https://drive.google.com/thumbnail?id=1HedmiS-H3-c4ejZGO_W1Tk7Fc1OHBWE-&sz=w1600",
+    alt: "Subasree running achievement 4",
+  },
+  {
+    src: "https://drive.google.com/thumbnail?id=1VDrYjM3qi8I9wm0oiubNV-PNKZLz_NBw&sz=w1600",
+    alt: "Subasree running achievement 5",
+  },
+  {
+    src: "https://drive.google.com/thumbnail?id=1e6zbpKT100BZqg5UUOnEXuxw2TUk4EIU&sz=w1600",
+    alt: "Subasree running achievement 6",
+  },
+];
 
 /* ============================================================
    ROUTE
@@ -72,15 +111,30 @@ export const Route = createFileRoute("/impact")({
 
 const impactCategoryRoutes: Record<string, string> = {
   "Water Restoration": "/projects/water-restoration",
-  "Environment & Biodiversity": "/projects/environment-biodiversity",
+
+  "Environment & Biodiversity":
+    "/projects/environment-biodiversity",
+
   "Disaster Relief & Humanitarian Support":
     "/projects/disaster-relief-humanitarian-support",
-  "Blood Donation": "/projects/blood-donation",
-  "Poverty & Hunger Support": "/projects/poverty-hunger-support",
-  "Youth Empowerment": "/projects/youth-empowerment",
-  Education: "/projects/education",
-  "Sports & Traditional Arts": "/projects/sports-traditional-arts",
-  "Community Development": "/projects/community-development",
+
+  "Blood Donation":
+    "/projects/blood-donation",
+
+  "Poverty & Hunger Support":
+    "/projects/poverty-hunger-support",
+
+  "Youth Empowerment":
+    "/projects/youth-empowerment",
+
+  Education:
+    "/projects/education",
+
+  "Sports & Traditional Arts":
+    "/projects/sports-traditional-arts",
+
+  "Community Development":
+    "/projects/community-development",
 };
 
 /* ============================================================
@@ -133,37 +187,6 @@ function StatCard({
 ============================================================ */
 
 function Impact() {
-  /* ==========================================================
-     SUBASREE GALLERY
-  ========================================================== */
-
-  const subasreeImages = [
-    {
-      src: subasreeImage1,
-      alt: "Subasree running achievement",
-    },
-    {
-      src: subasreeImage2,
-      alt: "Subasree running achievement",
-    },
-    {
-      src: subasreeImage3,
-      alt: "Subasree running achievement",
-    },
-    {
-      src: subasreeImage4,
-      alt: "Subasree running achievement",
-    },
-    {
-      src: subasreeImage5,
-      alt: "Subasree running achievement",
-    },
-    {
-      src: subasreeImage6,
-      alt: "Subasree running achievement",
-    },
-  ];
-
   return (
     <>
       {/* ======================================================
@@ -347,7 +370,10 @@ function Impact() {
             <Reveal key={story.slug}>
               <article className="overflow-hidden rounded-[2rem] border border-border bg-card">
                 <div className="grid lg:grid-cols-[0.8fr_1.2fr]">
-                  {/* STORY CONTENT */}
+
+                  {/* ==================================================
+                      STORY CONTENT
+                  ================================================== */}
 
                   <div className="flex flex-col justify-center p-8 sm:p-10 lg:p-12">
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
@@ -377,12 +403,15 @@ function Impact() {
                         size="sm"
                       >
                         Explore Our Work
+
                         <ArrowRight className="h-4 w-4" />
                       </BtnLink>
                     </div>
                   </div>
 
-                  {/* STORY IMAGES */}
+                  {/* ==================================================
+                      SUBASREE GOOGLE DRIVE IMAGES
+                  ================================================== */}
 
                   <div className="grid grid-cols-2 gap-1 bg-muted p-1 sm:grid-cols-3">
                     {subasreeImages.map((image, index) => (
@@ -393,9 +422,16 @@ function Impact() {
                         <img
                           src={image.src}
                           alt={image.alt}
-                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                          loading="lazy"
+                          className="block h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          loading={index < 3 ? "eager" : "lazy"}
                           decoding="async"
+                          referrerPolicy="no-referrer"
+                          onError={(event) => {
+                            console.error(
+                              "KNFT Google Drive image failed:",
+                              image.src
+                            );
+                          }}
                         />
                       </div>
                     ))}
@@ -433,6 +469,7 @@ function Impact() {
                 variant="secondary"
               >
                 Explore Our Work
+
                 <ArrowRight className="h-4 w-4" />
               </BtnLink>
 
@@ -441,6 +478,7 @@ function Impact() {
                 variant="outline"
               >
                 Get Involved
+
                 <Heart className="h-4 w-4" />
               </BtnLink>
             </div>
