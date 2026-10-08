@@ -24,14 +24,8 @@ import {
   SectionHeading,
 } from "@/components/ui-kit";
 
-
 /* ============================================================
    SAFE DRIVE IMAGE
-   ------------------------------------------------------------
-   Keeps the existing UI intact while preventing broken-image
-   icons / alt text when a Google Drive image is unavailable.
-   It tries the supplied fallback sources in order and renders
-   nothing if every source fails.
    ============================================================ */
 
 type SafeImageProps = ImgHTMLAttributes<HTMLImageElement> & {
@@ -45,10 +39,7 @@ function SafeImage({
   onError,
   ...props
 }: SafeImageProps) {
-  const candidates = [
-    src,
-    ...sources,
-  ].filter(
+  const candidates = [src, ...sources].filter(
     (value, index, list): value is string =>
       Boolean(value) && list.indexOf(value) === index,
   );
@@ -77,7 +68,6 @@ function SafeImage({
     />
   );
 }
-
 
 /* ============================================================
    DRIVE MEDIA GROUPS
@@ -114,9 +104,6 @@ const homeCategoryMedia: Record<string, string[]> = {
 
 /* ============================================================
    CATEGORY MEDIA RESOLVER
-   ------------------------------------------------------------
-   Every Home category points directly to its Google Drive group.
-   No filename/path matching is used here.
    ============================================================ */
 
 function getCategoryImages(categoryTitle: string): string[] {
@@ -209,13 +196,14 @@ function getCategoryImages(categoryTitle: string): string[] {
 
 /* ============================================================
    FEATURED PROJECT MEDIA RESOLVER
-   ------------------------------------------------------------
-   Featured Projects use the closest real Drive category instead
-   of cycling every project through water-restoration photos.
    ============================================================ */
 
-function getProjectImages(project: { slug?: string; title?: string }): string[] {
-  const value = `${project.slug ?? ""} ${project.title ?? ""}`.toLowerCase();
+function getProjectImages(project: {
+  slug?: string;
+  title?: string;
+}): string[] {
+  const value =
+    `${project.slug ?? ""} ${project.title ?? ""}`.toLowerCase();
 
   if (value.includes("muthampalayam")) {
     return driveMedia.waterRestoration.muthampalayamLakes;
@@ -255,7 +243,13 @@ function getProjectImages(project: { slug?: string; title?: string }): string[] 
 
 const heroDriveImage =
   "https://drive.google.com/thumbnail?id=1IJW-5hpOnUtJ4mxn9NAKzvHpgZt0cSq_&sz=w2000";
-
+const collectorLakeImages = [
+  "https://drive.google.com/thumbnail?id=1gepyGtSwoQZdHgky4_wSKYZmJdE-DYgv&sz=w1600",
+  "https://drive.google.com/thumbnail?id=15mVnPPFQUOaimeHxiKTLjDAwSLMZM7Gw&sz=w1600",
+  "https://drive.google.com/thumbnail?id=1hmdGWXcJREs2EpmpWv_Ld-kgOhcaAtZu&sz=w1600",
+  "https://drive.google.com/thumbnail?id=1BdgKv85rIOfvFVaMyu8T9iiDLltIQUCb&sz=w1600",
+  "https://drive.google.com/thumbnail?id=1sH_wh0zZXPGm1-xOrbEYvLGh_5YLIZhe&sz=w1600",
+];
 const heroImage = heroDriveImage;
 
 const aboutImage1 =
@@ -339,37 +333,33 @@ const resolvedLakeProjects = lakeProjects;
    ROUTE
    ============================================================ */
 
-export const Route =
-  createFileRoute("/")({
-    head: () => ({
-      meta: [
-        {
-          title:
-            "Kalam Nation First Trust — Nation First. Humanity Always.",
-        },
+export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      {
+        title:
+          "Kalam Nation First Trust — Nation First. Humanity Always.",
+      },
+      {
+        name: "description",
+        content:
+          "Kalam Nation First Trust works with communities to restore nature, support people, empower youth and create meaningful social impact.",
+      },
+      {
+        property: "og:title",
+        content:
+          "Kalam Nation First Trust — Nation First. Humanity Always.",
+      },
+      {
+        property: "og:description",
+        content:
+          "Community-driven action for people, nature and a stronger future.",
+      },
+    ],
+  }),
 
-        {
-          name: "description",
-          content:
-            "Kalam Nation First Trust works with communities to restore nature, support people, empower youth and create meaningful social impact.",
-        },
-
-        {
-          property: "og:title",
-          content:
-            "Kalam Nation First Trust — Nation First. Humanity Always.",
-        },
-
-        {
-          property: "og:description",
-          content:
-            "Community-driven action for people, nature and a stronger future.",
-        },
-      ],
-    }),
-
-    component: Home,
-  });
+  component: Home,
+});
 
 /* ============================================================
    HOME
@@ -380,30 +370,25 @@ function Home() {
      PROGRAMMES
      ========================================================== */
 
-  const programmeImageMap =
-    programmes
-      .filter((programme) => {
-        const value = `${programme.slug} ${programme.title}`.toLowerCase();
-        return (
-          !value.includes("poverty") &&
-          !value.includes("hunger")
-        );
-      })
-      .map((programme) => {
-        const images =
-          getCategoryImages(
-            programme.title,
-          );
+  const programmeImageMap = programmes
+    .filter((programme) => {
+      const value =
+        `${programme.slug} ${programme.title}`.toLowerCase();
 
-        return {
+      return (
+        !value.includes("poverty") &&
+        !value.includes("hunger")
+      );
+    })
+    .map((programme) => {
+      const images = getCategoryImages(programme.title);
+
+      return {
         ...programme,
-
         resolvedImage: images[0] ?? "",
-
-        categoryImages:
-          images,
+        categoryImages: images,
       };
-      });
+    });
 
   /* ==========================================================
      FEATURED PROJECT IMAGES
@@ -434,49 +419,28 @@ function Home() {
      COMMUNITY IMAGE DATA
      ========================================================== */
 
-  const communitySections =
-    communityCategories
-      .map((category) => ({
-        category,
-
-        images:
-          getCategoryImages(
-            category,
-          ),
-      }))
-      .filter(
-        (item) =>
-          item.images.length > 0,
-      );
+  const communitySections = communityCategories
+    .map((category) => ({
+      category,
+      images: getCategoryImages(category),
+    }))
+    .filter((item) => item.images.length > 0);
 
   /* ==========================================================
      HOME GALLERY
      ========================================================== */
 
   const galleryImages = [
-    ...resolvedWaterImages
-      .slice(0, 6)
-      .map((image, index) => ({
+    ...resolvedWaterImages.slice(0, 6).map((image, index) => ({
+      image,
+      alt: `KNFT water restoration activity ${index + 1}`,
+    })),
+
+    ...resolvedLakeProjects.flatMap((lake) =>
+      lake.images.slice(0, 2).map((image, index) => ({
         image,
-
-        alt: `KNFT water restoration activity ${
-          index + 1
-        }`,
+        alt: `${lake.name} restoration activity ${index + 1}`,
       })),
-
-    ...resolvedLakeProjects.flatMap(
-      (lake) =>
-        lake.images
-          .slice(0, 2)
-          .map(
-            (image, index) => ({
-              image,
-
-              alt: `${lake.name} restoration activity ${
-                index + 1
-              }`,
-            }),
-          ),
     ),
   ].filter(
     (
@@ -579,11 +543,7 @@ function Home() {
                     </p>
 
                     <p className="mt-2 font-display text-lg font-semibold text-white">
-                      {
-                        organisation
-                          .coreBelief
-                          .english
-                      }
+                      {organisation.coreBelief.english}
                     </p>
                   </div>
                 </div>
@@ -600,9 +560,7 @@ function Home() {
       <Section>
         <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <Reveal>
-            <Eyebrow>
-              Who We Are
-            </Eyebrow>
+            <Eyebrow>Who We Are</Eyebrow>
 
             <h2 className="mt-4 max-w-2xl text-3xl font-semibold leading-tight sm:text-5xl">
               Building communities.
@@ -678,22 +636,235 @@ function Home() {
             </p>
 
             <h2 className="mt-5 font-display text-3xl font-semibold leading-tight sm:text-5xl">
-              {
-                organisation
-                  .coreBelief
-                  .english
-              }
+              {organisation.coreBelief.english}
             </h2>
 
             <div className="mx-auto mt-7 h-px w-20 bg-emerald" />
 
             <p className="mt-6 text-xl leading-8 text-muted-foreground">
-              {
-                organisation
-                  .coreBelief
-                  .tamil
-              }
+              {organisation.coreBelief.tamil}
             </p>
+          </div>
+        </Reveal>
+      </Section>
+{/* ====================================================
+    DISTRICT COLLECTOR — 9 LAKES IN ONE DAY
+==================================================== */}
+
+<Section>
+  <Reveal>
+    <div className="mx-auto max-w-6xl">
+      <div className="text-center">
+        <Eyebrow>Leadership in Action</Eyebrow>
+
+        <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-5xl">
+          9 Lakes. One Day. One Collective Mission.
+        </h2>
+
+        <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-muted-foreground sm:text-lg">
+          A landmark lake-restoration initiative brought together
+          public leadership, field teams, volunteers and local
+          communities to undertake restoration work across
+          <strong className="font-semibold text-foreground">
+            {" "}9 lakes in a single day.
+          </strong>
+        </p>
+      </div>
+
+      <div className="mt-10 overflow-hidden rounded-[2rem] border border-border bg-background shadow-sm">
+        <div className="grid gap-0 lg:grid-cols-[1fr_0.85fr]">
+          {/* IMAGE COLLAGE */}
+          <div className="grid grid-cols-2 gap-2 bg-muted p-2 sm:grid-cols-3">
+            {collectorLakeImages.map((image, index) => (
+              <div
+                key={image}
+                className={`group relative overflow-hidden rounded-xl ${
+                  index === 0
+                    ? "col-span-2 row-span-2 sm:col-span-2"
+                    : ""
+                }`}
+              >
+                <SafeImage
+                  src={image}
+                  sources={collectorLakeImages.slice(index + 1)}
+                  alt={`District Collector lake restoration initiative — photo ${
+                    index + 1
+                  }`}
+                  className={`h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 ${
+                    index === 0
+                      ? "aspect-[4/3]"
+                      : "aspect-square"
+                  }`}
+                  loading="lazy"
+                  decoding="async"
+                />
+
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              </div>
+            ))}
+          </div>
+
+          {/* CONTENT */}
+          <div className="flex flex-col justify-center p-7 sm:p-10 lg:p-12">
+            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Leaf className="h-7 w-7" />
+            </span>
+
+            <p className="mt-7 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+              District-Level Leadership
+            </p>
+
+            <h3 className="mt-4 text-2xl font-semibold leading-tight sm:text-3xl">
+              Water restoration at scale.
+            </h3>
+
+            <p className="mt-5 text-sm leading-7 text-muted-foreground sm:text-base">
+              The initiative represents a strong example of
+              coordinated environmental action, with the District
+              Collector playing a key leadership role in bringing
+              together stakeholders for lake restoration and
+              community participation.
+            </p>
+
+            <div className="mt-7 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl border border-border bg-muted/60 p-5">
+                <p className="font-display text-3xl font-bold text-primary">
+                  9
+                </p>
+
+                <p className="mt-1 text-xs font-medium leading-5 text-muted-foreground">
+                  Lakes worked on
+                  <br />
+                  in one day
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-muted/60 p-5">
+                <p className="font-display text-3xl font-bold text-primary">
+                  15+
+                </p>
+
+                <p className="mt-1 text-xs font-medium leading-5 text-muted-foreground">
+                  Water bodies
+                  <br />
+                  restored
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-8 border-l-2 border-emerald pl-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary">
+                Public Leadership
+              </p>
+
+              <p className="mt-2 font-display text-lg font-semibold leading-snug">
+                Under the guidance and leadership of the
+                District Collector, Villupuram District
+              </p>
+
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                A coordinated effort connecting administration,
+                communities, volunteers and environmental action.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </Reveal>
+</Section>
+      {/* ====================================================
+          DISTRICT COLLECTOR / WATER RESTORATION INITIATIVE
+      ==================================================== */}
+
+      <Section>
+        <Reveal>
+          <div className="relative overflow-hidden rounded-[2rem] border border-border bg-background p-8 shadow-sm sm:p-12">
+            <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-emerald/10 blur-3xl" />
+
+            <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                  Water Restoration Initiative
+                </p>
+
+                <h2 className="mt-4 max-w-4xl text-3xl font-semibold leading-tight sm:text-4xl">
+                  Restoring water bodies through
+                  coordinated community action.
+                </h2>
+
+                <p className="mt-5 max-w-3xl text-base leading-8 text-muted-foreground">
+                  Kalam Nation First Trust has been actively involved
+                  in water-body restoration and community-focused
+                  environmental work across the region. The initiative
+                  has contributed to the restoration and revival of
+                  <strong className="font-semibold text-foreground">
+                    {" "}
+                    15+ water bodies
+                  </strong>
+                  , supported by volunteers, local communities and
+                  field-level coordination.
+                </p>
+
+                <p className="mt-4 max-w-3xl text-sm leading-7 text-muted-foreground">
+                  A major restoration initiative involving
+                  <strong className="font-semibold text-foreground">
+                    {" "}
+                    9 lakes
+                  </strong>{" "}
+                  was undertaken as part of a coordinated community
+                  effort, bringing together public leadership,
+                  field teams, volunteers and local stakeholders.
+                </p>
+
+                <div className="mt-7 flex flex-wrap gap-3">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-border bg-muted px-4 py-2 text-sm font-medium">
+                    <Leaf className="h-4 w-4 text-primary" />
+                    15+ Water Bodies
+                  </span>
+
+                  <span className="inline-flex items-center gap-2 rounded-full border border-border bg-muted px-4 py-2 text-sm font-medium">
+                    <Users className="h-4 w-4 text-primary" />
+                    9-Lake Initiative
+                  </span>
+                </div>
+              </div>
+
+              <div className="relative flex justify-start lg:justify-end">
+                <div className="flex h-32 w-32 flex-col items-center justify-center rounded-[2rem] bg-primary p-5 text-center text-primary-foreground shadow-xl sm:h-40 sm:w-40">
+                  <span className="font-display text-4xl font-bold sm:text-5xl">
+                    15+
+                  </span>
+
+                  <span className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-primary-foreground/75">
+                    Water Bodies
+                  </span>
+
+                  <span className="text-xs text-primary-foreground/70">
+                    Restored
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative mt-10 border-t border-border pt-7">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+                Public Leadership & Guidance
+              </p>
+
+              <p className="mt-3 font-display text-xl font-semibold leading-snug sm:text-2xl">
+                Under the guidance of the
+                District Collector,
+                Villupuram District
+              </p>
+
+              <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                The initiative reflects coordinated public leadership
+                and community participation in strengthening
+                environmental restoration and water conservation
+                efforts.
+              </p>
+            </div>
           </div>
         </Reveal>
       </Section>
@@ -704,9 +875,7 @@ function Home() {
 
       <Section tone="forest">
         <Reveal className="max-w-2xl">
-          <Eyebrow>
-            Our Impact
-          </Eyebrow>
+          <Eyebrow>Our Impact</Eyebrow>
 
           <h2 className="mt-4 text-3xl font-semibold sm:text-5xl">
             Turning collective action
@@ -728,14 +897,15 @@ function Home() {
               className="rounded-2xl border border-white/15 bg-white/10 p-7 backdrop-blur-sm"
             >
               <p className="font-display text-4xl font-semibold">
-                {stat.value === null ? (
+                {stat.label.toLowerCase().includes("water") ||
+                stat.label.toLowerCase().includes("water bodies") ? (
+                  "15+"
+                ) : stat.value === null ? (
                   "—"
                 ) : (
                   <Counter
                     value={stat.value}
-                    suffix={
-                      stat.suffix ?? ""
-                    }
+                    suffix={stat.suffix ?? ""}
                   />
                 )}
               </p>
@@ -745,7 +915,60 @@ function Home() {
               </p>
             </StaggerItem>
           ))}
+
+          <StaggerItem className="rounded-2xl border border-white/15 bg-white/10 p-7 backdrop-blur-sm">
+            <p className="font-display text-4xl font-semibold">
+              15+
+            </p>
+
+            <p className="mt-3 text-sm leading-6 text-primary-foreground/75">
+              Water bodies restored
+            </p>
+          </StaggerItem>
         </Stagger>
+
+        <Reveal delay={0.1}>
+          <div className="mt-10 rounded-2xl border border-white/15 bg-white/10 p-6 backdrop-blur-sm sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-foreground/60">
+              Water Restoration Impact
+            </p>
+
+            <div className="mt-4 grid gap-6 md:grid-cols-3">
+              <div>
+                <p className="font-display text-3xl font-bold">
+                  15+
+                </p>
+
+                <p className="mt-2 text-sm leading-6 text-primary-foreground/70">
+                  Water bodies restored through sustained
+                  environmental and community action.
+                </p>
+              </div>
+
+              <div>
+                <p className="font-display text-3xl font-bold">
+                  9
+                </p>
+
+                <p className="mt-2 text-sm leading-6 text-primary-foreground/70">
+                  Lakes brought together under a coordinated
+                  restoration initiative.
+                </p>
+              </div>
+
+              <div>
+                <p className="font-display text-3xl font-bold">
+                  1
+                </p>
+
+                <p className="mt-2 text-sm leading-6 text-primary-foreground/70">
+                  Shared mission connecting public leadership,
+                  volunteers and local communities.
+                </p>
+              </div>
+            </div>
+          </div>
+        </Reveal>
       </Section>
 
       {/* ====================================================
@@ -826,74 +1049,60 @@ function Home() {
         />
 
         <Stagger className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {programmeImageMap.map(
-            (programme) => (
-              <StaggerItem
-                key={programme.slug}
-              >
-                <article className="surface-card flex h-full flex-col overflow-hidden rounded-[1.75rem] transition-all duration-300 hover:-translate-y-1 hover:shadow-lift">
-                  <div className="relative aspect-[4/5] overflow-hidden bg-muted">
-                    <SafeImage
-                      src={programme.resolvedImage}
-                      sources={programme.categoryImages}
-                      alt=""
-                      className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
-                      loading="lazy"
-                      decoding="async"
-                    />
+          {programmeImageMap.map((programme) => (
+            <StaggerItem key={programme.slug}>
+              <article className="surface-card flex h-full flex-col overflow-hidden rounded-[1.75rem] transition-all duration-300 hover:-translate-y-1 hover:shadow-lift">
+                <div className="relative aspect-[4/5] overflow-hidden bg-muted">
+                  <SafeImage
+                    src={programme.resolvedImage}
+                    sources={programme.categoryImages}
+                    alt=""
+                    className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
+                    loading="lazy"
+                    decoding="async"
+                  />
 
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
 
-                    <div className="absolute bottom-0 left-0 right-0 p-6">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/90 text-primary shadow-lg backdrop-blur">
-                        <programme.icon
-                          className="h-5 w-5"
-                          aria-hidden="true"
-                        />
-                      </div>
-
-                      <h3 className="mt-4 text-xl font-semibold text-white">
-                        {
-                          programme.title
-                        }
-                      </h3>
+                  <div className="absolute bottom-0 left-0 right-0 p-6">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/90 text-primary shadow-lg backdrop-blur">
+                      <programme.icon
+                        className="h-5 w-5"
+                        aria-hidden="true"
+                      />
                     </div>
 
-                    {programme.categoryImages
-                      .length > 1 && (
-                      <span className="absolute right-4 top-4 rounded-full bg-black/60 px-3 py-1.5 text-xs text-white backdrop-blur-md">
-                        {
-                          programme
-                            .categoryImages
-                            .length
-                        }{" "}
-                        photos
-                      </span>
-                    )}
+                    <h3 className="mt-4 text-xl font-semibold text-white">
+                      {programme.title}
+                    </h3>
                   </div>
 
-                  <div className="flex flex-1 flex-col p-6">
-                    <p className="flex-1 text-sm leading-7 text-muted-foreground">
-                      {
-                        programme.description
-                      }
-                    </p>
+                  {programme.categoryImages.length > 1 && (
+                    <span className="absolute right-4 top-4 rounded-full bg-black/60 px-3 py-1.5 text-xs text-white backdrop-blur-md">
+                      {programme.categoryImages.length} photos
+                    </span>
+                  )}
+                </div>
 
-                    <div className="mt-6">
-                      <BtnLink
-                        to="/our-work"
-                        variant="outline"
-                        size="sm"
-                      >
-                        Explore
-                        <ArrowRight className="h-4 w-4" />
-                      </BtnLink>
-                    </div>
+                <div className="flex flex-1 flex-col p-6">
+                  <p className="flex-1 text-sm leading-7 text-muted-foreground">
+                    {programme.description}
+                  </p>
+
+                  <div className="mt-6">
+                    <BtnLink
+                      to="/our-work"
+                      variant="outline"
+                      size="sm"
+                    >
+                      Explore
+                      <ArrowRight className="h-4 w-4" />
+                    </BtnLink>
                   </div>
-                </article>
-              </StaggerItem>
-            ),
-          )}
+                </div>
+              </article>
+            </StaggerItem>
+          ))}
         </Stagger>
       </Section>
 
@@ -913,16 +1122,15 @@ function Home() {
             ({ category, images }, categoryIndex) => (
               <Reveal
                 key={category}
-                delay={
-                  categoryIndex * 0.03
-                }
+                delay={categoryIndex * 0.03}
               >
                 <div className="mb-6 flex items-end justify-between gap-4">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-                      {String(
-                        categoryIndex + 1,
-                      ).padStart(2, "0")}
+                      {String(categoryIndex + 1).padStart(
+                        2,
+                        "0",
+                      )}
                     </p>
 
                     <h3 className="mt-2 text-2xl font-semibold">
@@ -939,34 +1147,31 @@ function Home() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                  {images
-                    .slice(0, 8)
-                    .map(
-                      (
-                        image,
-                        imageIndex,
-                      ) => (
-                        <div
-                          key={`${category}-${imageIndex}`}
-                          className={`group relative overflow-hidden rounded-2xl ${
-                            imageIndex === 0
-                              ? "col-span-2 row-span-2"
-                              : ""
-                          }`}
-                        >
-                          <SafeImage
-                            src={image}
-                            sources={images.slice(imageIndex + 1)}
-                            alt=""
-                            className="aspect-square h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                            loading="lazy"
-                            decoding="async"
-                          />
+                  {images.slice(0, 8).map(
+                    (image, imageIndex) => (
+                      <div
+                        key={`${category}-${imageIndex}`}
+                        className={`group relative overflow-hidden rounded-2xl ${
+                          imageIndex === 0
+                            ? "col-span-2 row-span-2"
+                            : ""
+                        }`}
+                      >
+                        <SafeImage
+                          src={image}
+                          sources={images.slice(
+                            imageIndex + 1,
+                          )}
+                          alt=""
+                          className="aspect-square h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          loading="lazy"
+                          decoding="async"
+                        />
 
-                          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                        </div>
-                      ),
-                    )}
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                      </div>
+                    ),
+                  )}
                 </div>
               </Reveal>
             ),
@@ -1003,53 +1208,46 @@ function Home() {
           <div className="absolute left-4 top-0 h-full w-px bg-border sm:left-1/2 sm:-translate-x-1/2" />
 
           <Stagger className="space-y-10">
-            {organisation.journey.map(
-              (item, index) => (
-                <StaggerItem
-                  key={`${item.title}-${index}`}
-                  className="relative"
-                >
-                  <div className="grid gap-6 sm:grid-cols-2 sm:gap-12">
-                    <div
-                      className={`pl-10 sm:pl-0 ${
-                        index % 2 === 0
-                          ? "sm:text-right"
-                          : "sm:order-2"
-                      }`}
-                    >
-                      {"year" in item &&
-                      item.year ? (
-                        <p className="font-display text-3xl font-bold text-primary">
-                          {
-                            item.year
-                          }
-                        </p>
-                      ) : null}
-
-                      <h3 className="mt-2 text-xl font-semibold">
-                        {
-                          item.title
-                        }
-                      </h3>
-                    </div>
-
-                    <div
-                      className={`surface-card relative rounded-2xl p-6 ${
-                        index % 2 === 0
-                          ? ""
-                          : "sm:order-1"
-                      }`}
-                    >
-                      <span className="absolute -left-[2.1rem] top-7 h-3 w-3 rounded-full bg-emerald ring-4 ring-background sm:hidden" />
-
-                      <p className="text-sm leading-7 text-muted-foreground">
-                        {item.body}
+            {organisation.journey.map((item, index) => (
+              <StaggerItem
+                key={`${item.title}-${index}`}
+                className="relative"
+              >
+                <div className="grid gap-6 sm:grid-cols-2 sm:gap-12">
+                  <div
+                    className={`pl-10 sm:pl-0 ${
+                      index % 2 === 0
+                        ? "sm:text-right"
+                        : "sm:order-2"
+                    }`}
+                  >
+                    {"year" in item && item.year ? (
+                      <p className="font-display text-3xl font-bold text-primary">
+                        {item.year}
                       </p>
-                    </div>
+                    ) : null}
+
+                    <h3 className="mt-2 text-xl font-semibold">
+                      {item.title}
+                    </h3>
                   </div>
-                </StaggerItem>
-              ),
-            )}
+
+                  <div
+                    className={`surface-card relative rounded-2xl p-6 ${
+                      index % 2 === 0
+                        ? ""
+                        : "sm:order-1"
+                    }`}
+                  >
+                    <span className="absolute -left-[2.1rem] top-7 h-3 w-3 rounded-full bg-emerald ring-4 ring-background sm:hidden" />
+
+                    <p className="text-sm leading-7 text-muted-foreground">
+                      {item.body}
+                    </p>
+                  </div>
+                </div>
+              </StaggerItem>
+            ))}
           </Stagger>
         </div>
       </Section>
@@ -1066,28 +1264,24 @@ function Home() {
         />
 
         <Stagger className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {organisation.values.map(
-            (value, index) => (
-              <StaggerItem
-                key={value.title}
-                className="surface-card rounded-3xl p-7 transition-transform duration-300 hover:-translate-y-1"
-              >
-                <span className="text-sm font-semibold text-primary">
-                  {String(
-                    index + 1,
-                  ).padStart(2, "0")}
-                </span>
+          {organisation.values.map((value, index) => (
+            <StaggerItem
+              key={value.title}
+              className="surface-card rounded-3xl p-7 transition-transform duration-300 hover:-translate-y-1"
+            >
+              <span className="text-sm font-semibold text-primary">
+                {String(index + 1).padStart(2, "0")}
+              </span>
 
-                <h3 className="mt-6 text-xl font-semibold">
-                  {value.title}
-                </h3>
+              <h3 className="mt-6 text-xl font-semibold">
+                {value.title}
+              </h3>
 
-                <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                  {value.body}
-                </p>
-              </StaggerItem>
-            ),
-          )}
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                {value.body}
+              </p>
+            </StaggerItem>
+          ))}
         </Stagger>
       </Section>
 
@@ -1095,8 +1289,7 @@ function Home() {
           PHOTO GALLERY
       ==================================================== */}
 
-      {galleryImages.length >
-        0 && (
+      {galleryImages.length > 0 && (
         <Section>
           <SectionHeading
             eyebrow="On The Ground"
@@ -1105,28 +1298,26 @@ function Home() {
           />
 
           <Stagger className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3">
-            {galleryImages.map(
-              (item, index) => (
-                <StaggerItem
-                  key={`${item.alt}-${index}`}
-                >
-                  <div className="group relative overflow-hidden rounded-2xl">
-                    <SafeImage
-                      src={item.image}
-                      sources={galleryImages
-                        .slice(index + 1)
-                        .map((entry) => entry.image)}
-                      alt=""
-                      className="aspect-square w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      loading="lazy"
-                      decoding="async"
-                    />
+            {galleryImages.map((item, index) => (
+              <StaggerItem
+                key={`${item.alt}-${index}`}
+              >
+                <div className="group relative overflow-hidden rounded-2xl">
+                  <SafeImage
+                    src={item.image}
+                    sources={galleryImages
+                      .slice(index + 1)
+                      .map((entry) => entry.image)}
+                    alt=""
+                    className="aspect-square w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    loading="lazy"
+                    decoding="async"
+                  />
 
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                  </div>
-                </StaggerItem>
-              ),
-            )}
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                </div>
+              </StaggerItem>
+            ))}
           </Stagger>
 
           <div className="mt-9 flex justify-center">
@@ -1154,19 +1345,11 @@ function Home() {
             />
 
             <p className="mt-5 max-w-4xl font-display text-2xl font-semibold leading-snug sm:text-4xl">
-              {
-                organisation
-                  .philosophy
-                  .statement
-              }
+              {organisation.philosophy.statement}
             </p>
 
             <p className="mt-5 max-w-3xl text-sm leading-7 text-muted-foreground">
-              {
-                organisation
-                  .philosophy
-                  .tamil
-              }
+              {organisation.philosophy.tamil}
             </p>
           </Reveal>
 

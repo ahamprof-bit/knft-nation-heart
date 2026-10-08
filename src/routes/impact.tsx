@@ -1,5 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Heart, Leaf, Quote, Users } from "lucide-react";
+import {
+  ArrowRight,
+  Heart,
+  Leaf,
+  Quote,
+  Users,
+  Waves,
+  MapPin,
+} from "lucide-react";
 
 import {
   environmentalImpact,
@@ -9,6 +17,8 @@ import {
   socialImpact,
   type Stat,
 } from "@/data/impact";
+
+import { driveMedia } from "@/data/driveMedia";
 
 import {
   Counter,
@@ -29,49 +39,37 @@ import {
    SUBASREE GOOGLE DRIVE IMAGES
 ============================================================ */
 
-/*
- * Google Drive files are converted to thumbnail URLs.
- *
- * DO NOT use:
- *
- * https://drive.google.com/file/d/FILE_ID/view
- *
- * DO NOT use:
- *
- * https://drive.google.com/uc?export=view&id=FILE_ID
- *
- * We use:
- *
- * https://drive.google.com/thumbnail?id=FILE_ID&sz=w1600
- *
- * This is intended to return an image that can be used
- * directly inside <img src="..." />.
- */
+const subasreeImages = driveMedia.sports.running.map(
+  (src, index) => ({
+    src,
+    alt: `Subasree running achievement ${index + 1}`,
+  }),
+);
 
-const subasreeImages = [
+/* ============================================================
+   COLLECTOR / LAKE RESTORATION IMAGES
+============================================================ */
+
+const collectorLakeImages = [
   {
-    src: "https://drive.google.com/thumbnail?id=18ummt1i4WJYzLeSnbIaE-lPUGAvp-COW&sz=w1600",
-    alt: "Subasree running achievement 1",
+    src: "https://drive.google.com/thumbnail?id=1gepyGtSwoQZdHgky4_wSKYZmJdE-DYgv&sz=w1600",
+    alt: "Lake restoration initiative",
   },
   {
-    src: "https://drive.google.com/thumbnail?id=19F8_3V1cwxV0Ox1rYGbRvP7hDlfQHlia&sz=w1600",
-    alt: "Subasree running achievement 2",
+    src: "https://drive.google.com/thumbnail?id=15mVnPPFQUOaimeHxiKTLjDAwSLMZM7Gw&sz=w1600",
+    alt: "Lake restoration inspection",
   },
   {
-    src: "https://drive.google.com/thumbnail?id=1G77lS31IEkVkpv0aLcLMni3EJ067cnV_&sz=w1600",
-    alt: "Subasree running achievement 3",
+    src: "https://drive.google.com/thumbnail?id=1hmdGWXcJREs2EpmpWv_Ld-kgOhcaAtZu&sz=w1600",
+    alt: "Water restoration work",
   },
   {
-    src: "https://drive.google.com/thumbnail?id=1HedmiS-H3-c4ejZGO_W1Tk7Fc1OHBWE-&sz=w1600",
-    alt: "Subasree running achievement 4",
+    src: "https://drive.google.com/thumbnail?id=1BdgKv85rIOfvFVaMyu8T9iiDLltIQUCb&sz=w1600",
+    alt: "Muthampalayam lake restoration",
   },
   {
-    src: "https://drive.google.com/thumbnail?id=1VDrYjM3qi8I9wm0oiubNV-PNKZLz_NBw&sz=w1600",
-    alt: "Subasree running achievement 5",
-  },
-  {
-    src: "https://drive.google.com/thumbnail?id=1e6zbpKT100BZqg5UUOnEXuxw2TUk4EIU&sz=w1600",
-    alt: "Subasree running achievement 6",
+    src: "https://drive.google.com/thumbnail?id=1sH_wh0zZXPGm1-xOrbEYvLGh_5YLIZhe&sz=w1600",
+    alt: "Community participation in lake restoration",
   },
 ];
 
@@ -225,12 +223,217 @@ function Impact() {
         />
 
         <Stagger className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {impactStats.map((stat) => (
-            <StaggerItem key={stat.label}>
-              <StatCard stat={stat} />
-            </StaggerItem>
-          ))}
+          {impactStats.map((stat) => {
+            /*
+             * Keep the existing data structure, but make sure
+             * the Water Bodies Restored figure is shown as 15+.
+             */
+            const normalizedStat =
+              stat.label.toLowerCase().includes("water") &&
+              stat.label.toLowerCase().includes("restor")
+                ? {
+                    ...stat,
+                    value: 15,
+                    suffix: "+",
+                  }
+                : stat;
+
+            return (
+              <StaggerItem key={stat.label}>
+                <StatCard stat={normalizedStat} />
+              </StaggerItem>
+            );
+          })}
         </Stagger>
+
+        {/* ====================================================
+            WATER RESTORATION HIGHLIGHT
+        ==================================================== */}
+
+        <Reveal className="mt-10">
+          <div className="overflow-hidden rounded-[2rem] border border-primary/15 bg-primary/[0.04]">
+            <div className="grid lg:grid-cols-[0.9fr_1.1fr]">
+              {/* CONTENT */}
+
+              <div className="flex flex-col justify-center p-8 sm:p-10 lg:p-12">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <Waves className="h-7 w-7" />
+                </div>
+
+                <p className="mt-7 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                  Water Restoration
+                </p>
+
+                <h2 className="mt-4 max-w-xl font-display text-4xl font-semibold leading-tight sm:text-5xl">
+                  Restoring water bodies. Reviving communities.
+                </h2>
+
+                <p className="mt-5 max-w-xl leading-8 text-muted-foreground">
+                  KNFT works alongside communities and volunteers to restore
+                  water bodies, strengthen local ecosystems and create
+                  healthier surroundings for future generations.
+                </p>
+
+                {/* KEY ACHIEVEMENTS */}
+
+                <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-border bg-card p-5">
+                    <p className="font-display text-3xl font-semibold text-primary">
+                      15+
+                    </p>
+
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      Water bodies restored
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-border bg-card p-5">
+                    <p className="font-display text-3xl font-semibold text-primary">
+                      9
+                    </p>
+
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      Lakes restored in one day
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-8">
+                  <BtnLink
+                    to="/projects/water-restoration"
+                    variant="outline"
+                    size="sm"
+                  >
+                    Explore Water Restoration
+                    <ArrowRight className="h-4 w-4" />
+                  </BtnLink>
+                </div>
+              </div>
+
+              {/* IMAGES */}
+
+              <div className="grid grid-cols-2 gap-1 bg-muted p-1 sm:grid-cols-3">
+                {collectorLakeImages.map((image, index) => (
+                  <div
+                    key={`water-impact-${index}`}
+                    className="group relative aspect-square overflow-hidden bg-muted"
+                  >
+                    <img
+                      src={image.src}
+                      alt={image.alt}
+                      className="block h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      loading={index < 3 ? "eager" : "lazy"}
+                      decoding="async"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      </Section>
+
+      {/* ======================================================
+          COLLECTOR-LED 9 LAKES INITIATIVE
+          
+          Collector details are intentionally shown ONLY here.
+      ====================================================== */}
+
+      <Section tone="forest">
+        <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+          {/* CONTENT */}
+
+          <Reveal>
+            <Eyebrow>District-Led Water Restoration</Eyebrow>
+
+            <h2 className="mt-5 font-display text-3xl font-semibold leading-tight text-white sm:text-5xl">
+              9 Lakes. One Day. One Collective Mission.
+            </h2>
+
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-white/70">
+              A landmark restoration initiative that brought together local
+              administration, communities and volunteers to restore nine lakes
+              in a single day.
+            </p>
+
+            {/* COLLECTOR DETAILS — ONLY PLACE ON THIS PAGE */}
+
+            <div className="mt-8 rounded-[1.5rem] border border-white/15 bg-white/10 p-6 backdrop-blur-sm">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white">
+                  <MapPin className="h-6 w-6" />
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/60">
+                    Under the guidance and leadership of
+                  </p>
+
+                  <h3 className="mt-2 text-lg font-semibold text-white">
+                    Thiru. S. Sheik Abdul Rahaman, I.A.S.
+                  </h3>
+
+                  <p className="mt-1 text-sm leading-6 text-white/65">
+                    District Collector, Villupuram
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <p className="mt-6 max-w-2xl leading-8 text-white/70">
+              The initiative reflects the power of administrative leadership,
+              community participation and volunteer action in creating
+              meaningful and lasting environmental change.
+            </p>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <BtnLink
+                to="/projects/water-restoration"
+                variant="secondary"
+              >
+                View Water Restoration
+                <ArrowRight className="h-4 w-4" />
+              </BtnLink>
+
+              <BtnLink
+                to="/our-work"
+                variant="outline"
+              >
+                Explore Our Work
+                <Leaf className="h-4 w-4" />
+              </BtnLink>
+            </div>
+          </Reveal>
+
+          {/* COLLECTOR / LAKE IMAGES */}
+
+          <Reveal>
+            <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 p-2">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {collectorLakeImages.map((image, index) => (
+                  <div
+                    key={`collector-gallery-${index}`}
+                    className={`group relative overflow-hidden rounded-xl ${
+                      index === 0
+                        ? "col-span-2 row-span-2 aspect-square sm:col-span-2"
+                        : "aspect-square"
+                    }`}
+                  >
+                    <img
+                      src={image.src}
+                      alt={image.alt}
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      loading="lazy"
+                      decoding="async"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Reveal>
+        </div>
       </Section>
 
       {/* ======================================================
@@ -370,10 +573,7 @@ function Impact() {
             <Reveal key={story.slug}>
               <article className="overflow-hidden rounded-[2rem] border border-border bg-card">
                 <div className="grid lg:grid-cols-[0.8fr_1.2fr]">
-
-                  {/* ==================================================
-                      STORY CONTENT
-                  ================================================== */}
+                  {/* STORY CONTENT */}
 
                   <div className="flex flex-col justify-center p-8 sm:p-10 lg:p-12">
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
@@ -403,15 +603,12 @@ function Impact() {
                         size="sm"
                       >
                         Explore Our Work
-
                         <ArrowRight className="h-4 w-4" />
                       </BtnLink>
                     </div>
                   </div>
 
-                  {/* ==================================================
-                      SUBASREE GOOGLE DRIVE IMAGES
-                  ================================================== */}
+                  {/* SUBASREE GOOGLE DRIVE IMAGES */}
 
                   <div className="grid grid-cols-2 gap-1 bg-muted p-1 sm:grid-cols-3">
                     {subasreeImages.map((image, index) => (
@@ -426,10 +623,10 @@ function Impact() {
                           loading={index < 3 ? "eager" : "lazy"}
                           decoding="async"
                           referrerPolicy="no-referrer"
-                          onError={(event) => {
+                          onError={() => {
                             console.error(
                               "KNFT Google Drive image failed:",
-                              image.src
+                              image.src,
                             );
                           }}
                         />
@@ -469,7 +666,6 @@ function Impact() {
                 variant="secondary"
               >
                 Explore Our Work
-
                 <ArrowRight className="h-4 w-4" />
               </BtnLink>
 
@@ -478,7 +674,6 @@ function Impact() {
                 variant="outline"
               >
                 Get Involved
-
                 <Heart className="h-4 w-4" />
               </BtnLink>
             </div>

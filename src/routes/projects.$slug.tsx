@@ -8,6 +8,8 @@ import {
   Play,
 } from "lucide-react";
 
+import { useState } from "react";
+
 import {
   getProject,
   getWaterProjects,
@@ -28,6 +30,7 @@ import {
   Section,
   SectionHeading,
 } from "@/components/ui-kit";
+
 
 /* ============================================================
    GOOGLE DRIVE MEDIA
@@ -80,13 +83,113 @@ function unique(items: string[]) {
 
 
 /* ============================================================
-   WATER RESTORATION MEDIA
+   GOOGLE DRIVE IMAGE FALLBACK
+   ============================================================
+
+   Some Google Drive thumbnail URLs can work locally but fail
+   after deployment.
+
+   This component tries multiple Google Drive image formats:
+
+   1. Original thumbnail URL
+   2. Google Drive direct view URL
+   3. Googleusercontent URL
+
+   This prevents the browser from immediately showing only
+   the image alt text when one Drive URL format fails.
+
    ============================================================ */
 
-/*
- * These are the water-restoration folders that are actually
- * mapped in driveMedia.ts.
- */
+function getDriveFileId(src: string) {
+  try {
+    const url = new URL(src);
+
+    const id = url.searchParams.get("id");
+
+    if (id) {
+      return id;
+    }
+
+    const match = src.match(
+      /\/d\/([^/]+)/
+    );
+
+    return match?.[1] ?? null;
+  } catch {
+    const match = src.match(
+      /\/d\/([^/]+)/
+    );
+
+    return match?.[1] ?? null;
+  }
+}
+
+
+function getDriveImageSources(src: string) {
+  const fileId = getDriveFileId(src);
+
+  if (!fileId) {
+    return [src];
+  }
+
+  return unique([
+    src,
+
+    `https://drive.google.com/uc?export=view&id=${fileId}`,
+
+    `https://drive.google.com/thumbnail?id=${fileId}&sz=w2000`,
+
+    `https://lh3.googleusercontent.com/d/${fileId}=w2000`,
+  ]);
+}
+
+
+function DriveImage({
+  src,
+  alt,
+  className,
+  loading = "lazy",
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  loading?: "lazy" | "eager";
+}) {
+  const sources = getDriveImageSources(src);
+
+  const [sourceIndex, setSourceIndex] =
+    useState(0);
+
+  const currentSource =
+    sources[sourceIndex] ?? src;
+
+  return (
+    <img
+      src={currentSource}
+      alt={alt}
+      className={className}
+      loading={loading}
+      decoding="async"
+      onError={() => {
+        setSourceIndex((current) => {
+          if (
+            current <
+            sources.length - 1
+          ) {
+            return current + 1;
+          }
+
+          return current;
+        });
+      }}
+    />
+  );
+}
+
+
+/* ============================================================
+   WATER RESTORATION MEDIA
+   ============================================================ */
 
 const aaduMalavanthangalImages =
   driveMedia.waterRestoration
@@ -122,7 +225,10 @@ const waterVideos = unique([
    CATEGORY MEDIA
    ============================================================ */
 
-const categoryImages: Record<string, string[]> = {
+const categoryImages: Record<
+  string,
+  string[]
+> = {
   "water restoration": unique([
     ...aaduMalavanthangalImages,
     ...erumananthangalImages,
@@ -170,25 +276,9 @@ const categoryImages: Record<string, string[]> = {
    FIND PROJECT IMAGES
    ============================================================ */
 
-/*
- * IMPORTANT
- * ----------
- * This function intentionally uses PROJECT-SPECIFIC matching.
- *
- * We do NOT do:
- *
- *   if water -> return all waterImages
- *
- * because that causes:
- *
- * Kakuppam
- * Koliyanur
- * Murukkeri
- *
- * to display the same unrelated thumbnail.
- */
-
-function findImages(terms: string[]): string[] {
+function findImages(
+  terms: string[],
+): string[] {
   if (!terms.length) {
     return [];
   }
@@ -217,7 +307,9 @@ function findImages(terms: string[]): string[] {
      ========================================================== */
 
   if (
-    normalized.includes("erumananthangal")
+    normalized.includes(
+      "erumananthangal",
+    )
   ) {
     return unique(
       erumananthangalImages,
@@ -230,7 +322,9 @@ function findImages(terms: string[]): string[] {
      ========================================================== */
 
   if (
-    normalized.includes("muthampalayam")
+    normalized.includes(
+      "muthampalayam",
+    )
   ) {
     return unique(
       muthampalayamImages,
@@ -245,15 +339,6 @@ function findImages(terms: string[]): string[] {
   if (
     normalized.includes("kakuppam")
   ) {
-    /*
-     * No separate Kakuppam Drive folder is currently mapped.
-     *
-     * IMPORTANT:
-     * Do NOT return generic waterImages here.
-     *
-     * This prevents an unrelated lake thumbnail from appearing.
-     */
-
     return [];
   }
 
@@ -265,10 +350,6 @@ function findImages(terms: string[]): string[] {
   if (
     normalized.includes("koliyanur")
   ) {
-    /*
-     * No separate Koliyanur Drive folder is currently mapped.
-     */
-
     return [];
   }
 
@@ -280,10 +361,6 @@ function findImages(terms: string[]): string[] {
   if (
     normalized.includes("murukkeri")
   ) {
-    /*
-     * No separate Murukkeri Drive folder is currently mapped.
-     */
-
     return [];
   }
 
@@ -336,9 +413,15 @@ function findImages(terms: string[]): string[] {
      ========================================================== */
 
   if (
-    normalized.includes("tree plantation") ||
-    normalized.includes("tree planting") ||
-    normalized.includes("plantation")
+    normalized.includes(
+      "tree plantation",
+    ) ||
+    normalized.includes(
+      "tree planting",
+    ) ||
+    normalized.includes(
+      "plantation",
+    )
   ) {
     return unique(
       categoryImages[
@@ -355,7 +438,9 @@ function findImages(terms: string[]): string[] {
   if (
     normalized.includes("disaster") ||
     normalized.includes("relief") ||
-    normalized.includes("humanitarian") ||
+    normalized.includes(
+      "humanitarian",
+    ) ||
     normalized.includes("flood") ||
     normalized.includes("emergency")
   ) {
@@ -405,9 +490,13 @@ function findImages(terms: string[]): string[] {
 
   if (
     normalized.includes("sport") ||
-    normalized.includes("traditional") ||
+    normalized.includes(
+      "traditional",
+    ) ||
     normalized.includes("malkhamb") ||
-    normalized.includes("mallakhamb") ||
+    normalized.includes(
+      "mallakhamb",
+    ) ||
     normalized.includes("karate") ||
     normalized.includes("running")
   ) {
@@ -425,7 +514,9 @@ function findImages(terms: string[]): string[] {
 
   if (
     normalized.includes("community") ||
-    normalized.includes("development") ||
+    normalized.includes(
+      "development",
+    ) ||
     normalized.includes("rural")
   ) {
     return unique(
@@ -442,7 +533,9 @@ function findImages(terms: string[]): string[] {
 
   if (
     normalized.includes("career") ||
-    normalized.includes("employment") ||
+    normalized.includes(
+      "employment",
+    ) ||
     normalized.includes("job") ||
     normalized.includes("skill")
   ) {
@@ -466,15 +559,9 @@ function findImages(terms: string[]): string[] {
    FIND PROJECT VIDEOS
    ============================================================ */
 
-/*
- * IMPORTANT
- * ----------
- * Videos are also project-specific.
- *
- * We do NOT display the same water video on every lake page.
- */
-
-function findVideos(terms: string[]): string[] {
+function findVideos(
+  terms: string[],
+): string[] {
   if (!terms.length) {
     return [];
   }
@@ -499,10 +586,9 @@ function findVideos(terms: string[]): string[] {
 
 
   /*
-   * At the moment there is no confirmed project-specific
-   * Drive video mapping for the other lake projects.
-   *
-   * Returning [] prevents unrelated videos from appearing.
+   * At the moment there is no confirmed
+   * project-specific Drive video mapping
+   * for the other lake projects.
    */
 
   return [];
@@ -513,63 +599,54 @@ function findVideos(terms: string[]): string[] {
    ROUTE
    ============================================================ */
 
-export const Route = createFileRoute(
-  "/projects/$slug",
-)({
-  head: ({ params }) => {
-    const project = getProject(
-      params.slug,
-    );
+export const Route =
+  createFileRoute(
+    "/projects/$slug",
+  )({
+    head: ({ params }) => {
+      const project =
+        getProject(params.slug);
 
-    return {
-      meta: [
-        {
-          title: project
-            ? `${project.title} — KNFT`
-            : "Project — Kalam Nation First Trust",
-        },
+      return {
+        meta: [
+          {
+            title: project
+              ? `${project.title} — KNFT`
+              : "Project — Kalam Nation First Trust",
+          },
 
-        {
-          name: "description",
-          content: project
-            ? project.overview
-            : "Explore Kalam Nation First Trust community initiatives and projects.",
-        },
+          {
+            name: "description",
+            content: project
+              ? project.overview
+              : "Explore Kalam Nation First Trust community initiatives and projects.",
+          },
 
-        {
-          property: "og:title",
-          content: project
-            ? `${project.title} — KNFT`
-            : "KNFT Project",
-        },
+          {
+            property: "og:title",
+            content: project
+              ? `${project.title} — KNFT`
+              : "KNFT Project",
+          },
 
-        {
-          property: "og:description",
-          content: project
-            ? project.overview
-            : "Explore KNFT projects and programmes.",
-        },
-      ],
-    };
-  },
+          {
+            property: "og:description",
+            content: project
+              ? project.overview
+              : "Explore KNFT projects and programmes.",
+          },
+        ],
+      };
+    },
 
-  component: ProjectDetail,
-});
+    component:
+      ProjectDetail,
+  });
 
 
 /* ============================================================
    PROJECT MEDIA
    ============================================================ */
-
-/*
- * PRIORITY
- *
- * 1. Project-specific Google Drive video
- * 2. Project-specific Google Drive image
- * 3. Project-specific YouTube video
- *
- * NO WRONG MEDIA FALLBACK
- */
 
 function ProjectMedia({
   project,
@@ -642,7 +719,7 @@ function ProjectMedia({
         "
       >
         <div className="aspect-[9/16] w-full">
-          <img
+          <DriveImage
             src={projectImage}
             alt={project.title}
             className="
@@ -651,7 +728,6 @@ function ProjectMedia({
               object-cover
             "
             loading="eager"
-            decoding="async"
           />
         </div>
       </div>
@@ -763,8 +839,9 @@ function ProjectMedia({
         </p>
 
         <p className="mt-2 text-sm text-muted-foreground">
-          Media for this project will be added when its
-          dedicated Drive folder is mapped.
+          Media for this project will be added
+          when its dedicated Drive folder is
+          mapped.
         </p>
       </div>
     </div>
@@ -935,9 +1012,7 @@ function RelatedWaterProjects({
                 "
               >
 
-                {/* ==================================================
-                    MEDIA
-                ================================================== */}
+                {/* MEDIA */}
 
                 {image ? (
                   <div
@@ -951,7 +1026,7 @@ function RelatedWaterProjects({
                     "
                   >
                     <div className="aspect-[9/16] w-full">
-                      <img
+                      <DriveImage
                         src={image}
                         alt={project.title}
                         className="
@@ -963,7 +1038,6 @@ function RelatedWaterProjects({
                           group-hover:scale-105
                         "
                         loading="lazy"
-                        decoding="async"
                       />
                     </div>
                   </div>
@@ -996,9 +1070,7 @@ function RelatedWaterProjects({
                 ) : null}
 
 
-                {/* ==================================================
-                    CONTENT
-                ================================================== */}
+                {/* CONTENT */}
 
                 <div className="p-5">
 
@@ -1124,7 +1196,7 @@ function ProjectDetail() {
 
       {/* ======================================================
           HERO
-      ====================================================== */}
+          ====================================================== */}
 
       <PageHero
         eyebrow={project.category}
@@ -1135,7 +1207,7 @@ function ProjectDetail() {
 
       {/* ======================================================
           MAIN PROJECT
-      ====================================================== */}
+          ====================================================== */}
 
       <Section>
         <div
@@ -1147,9 +1219,7 @@ function ProjectDetail() {
           "
         >
 
-          {/* ==================================================
-              MEDIA
-          ================================================== */}
+          {/* MEDIA */}
 
           <Reveal>
             <ProjectMedia
@@ -1170,9 +1240,7 @@ function ProjectDetail() {
           </Reveal>
 
 
-          {/* ==================================================
-              BASIC INFO
-          ================================================== */}
+          {/* BASIC INFO */}
 
           <Reveal delay={0.1}>
 
@@ -1238,9 +1306,7 @@ function ProjectDetail() {
             </p>
 
 
-            {/* ==================================================
-                HIGHLIGHTS
-            ================================================== */}
+            {/* HIGHLIGHTS */}
 
             {project.highlights.length > 0 && (
               <ul className="mt-7 space-y-3">
@@ -1283,7 +1349,7 @@ function ProjectDetail() {
 
       {/* ======================================================
           DETAILS
-      ====================================================== */}
+          ====================================================== */}
 
       <Section tone="muted">
 
@@ -1409,13 +1475,9 @@ function ProjectDetail() {
       {/* ======================================================
           PROJECT GALLERY
 
-          IMPORTANT
-          ----------
           First image = main project image.
-
           Gallery starts from image #2.
-          This prevents duplicate first image.
-      ====================================================== */}
+          ====================================================== */}
 
       {images.length > 1 && (
         <Section>
@@ -1456,7 +1518,7 @@ function ProjectDetail() {
 
                       <div className="aspect-[9/16] w-full">
 
-                        <img
+                        <DriveImage
                           src={image}
                           alt={`${project.title} ${
                             index + 2
@@ -1470,7 +1532,6 @@ function ProjectDetail() {
                             group-hover:scale-105
                           "
                           loading="lazy"
-                          decoding="async"
                         />
 
                       </div>
@@ -1488,7 +1549,7 @@ function ProjectDetail() {
 
       {/* ======================================================
           YOUTUBE
-      ====================================================== */}
+          ====================================================== */}
 
       <YouTubeSection
         project={project}
@@ -1497,7 +1558,7 @@ function ProjectDetail() {
 
       {/* ======================================================
           RELATED WATER PROJECTS
-      ====================================================== */}
+          ====================================================== */}
 
       {project.category ===
         "Water Restoration" &&
@@ -1512,7 +1573,7 @@ function ProjectDetail() {
 
       {/* ======================================================
           BACK / NAVIGATION
-      ====================================================== */}
+          ====================================================== */}
 
       <Section tone="muted">
 
@@ -1528,7 +1589,8 @@ function ProjectDetail() {
           </BtnLink>
 
 
-          {project.kind === "project" &&
+          {project.kind ===
+            "project" &&
             project.category ===
               "Water Restoration" && (
 

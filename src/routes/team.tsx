@@ -41,6 +41,75 @@ function Team() {
       />
 
       {/* =========================================================
+          DISTRICT COLLECTOR / LEADERSHIP
+      ========================================================= */}
+      <Section>
+        <div className="mx-auto max-w-7xl">
+          <section className="relative overflow-hidden rounded-3xl border bg-background shadow-sm">
+            {/* Left Accent */}
+            <div className="absolute inset-y-0 left-0 w-1 bg-primary" />
+
+            {/* Decorative Background */}
+            <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-primary/5" />
+            <div className="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-primary/5" />
+
+            <div className="relative p-7 sm:p-10 lg:p-12">
+              {/* Eyebrow */}
+              <div className="inline-flex items-center rounded-full bg-primary/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-primary">
+                District Leadership
+              </div>
+
+              {/* Main Content */}
+              <div className="mt-7 max-w-4xl">
+                <h2 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
+                  District Collector, Villupuram
+                </h2>
+
+                <div className="mt-5">
+                  <h3 className="text-xl font-bold text-foreground sm:text-2xl">
+                    Thiru. S. Sheik Abdul Rahaman, I.A.S.
+                  </h3>
+
+                  <p className="mt-2 text-sm font-medium text-primary sm:text-base">
+                    District Collector, Villupuram
+                  </p>
+                </div>
+
+                {/* Mission Highlight */}
+                <div className="mt-8 rounded-2xl border border-primary/20 bg-primary/5 p-6 sm:p-7">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                    District-Led Water Restoration
+                  </p>
+
+                  <h3 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
+                    9 Lakes. One Day. One Collective Mission.
+                  </h3>
+
+                  <p className="mt-4 max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base">
+                    Under the guidance and leadership of the District Collector,
+                    Villupuram District, a collective water-restoration effort
+                    brought together district administration, municipalities,
+                    volunteers and local communities to work towards restoring
+                    water bodies and strengthening environmental stewardship.
+                  </p>
+                </div>
+
+                {/* Leadership Statement */}
+                <div className="mt-7 border-l-2 border-primary/40 pl-5">
+                  <p className="text-sm leading-7 text-muted-foreground sm:text-base">
+                    This initiative reflects the power of collaborative
+                    leadership, where government administration, volunteers and
+                    communities come together with a shared commitment to
+                    protecting and restoring local water resources.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </Section>
+
+      {/* =========================================================
           TEAM SECTIONS
       ========================================================= */}
       <Section>

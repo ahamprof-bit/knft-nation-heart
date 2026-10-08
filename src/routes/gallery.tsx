@@ -6,11 +6,8 @@ import { useMemo, useState } from "react";
 import {
   galleryCategories,
   galleryItems,
-  videoItems,
   type GalleryCategory,
 } from "@/data/gallery";
-
-import { VideoPlaceholder } from "@/components/placeholders";
 
 import {
   PageHero,
@@ -19,15 +16,15 @@ import {
 } from "@/components/ui-kit";
 
 /* ============================================================
-   GOOGLE DRIVE HELPER
+   GOOGLE DRIVE IMAGE HELPERS
    ============================================================ */
 
 function driveImage(fileId: string) {
-  return `https://drive.google.com/uc?export=view&id=${fileId}`;
+  return `https://drive.google.com/thumbnail?id=${fileId}&sz=w2000`;
 }
 
-function driveVideo(fileId: string) {
-  return `https://drive.google.com/uc?export=download&id=${fileId}`;
+function driveImageFallback(fileId: string) {
+  return `https://drive.google.com/uc?export=view&id=${fileId}`;
 }
 
 /* ============================================================
@@ -37,6 +34,7 @@ function driveVideo(fileId: string) {
 type DriveGalleryItem = {
   id: string;
   src: string;
+  fallbackSrc: string;
   caption: string;
   category: GalleryCategory;
 };
@@ -56,6 +54,7 @@ function addDriveFiles(
     driveGalleryItems.push({
       id: `drive-${folderName}-${index}-${id}`,
       src: driveImage(id),
+      fallbackSrc: driveImageFallback(id),
       caption: folderName,
       category,
     });
@@ -280,7 +279,7 @@ addDriveFiles(
 );
 
 /* ============================================================
-   PROJECT & IMPACT
+   PROJECTS & IMPACT
    ============================================================ */
 
 addDriveFiles(
@@ -444,168 +443,251 @@ addDriveFiles(
   "Sports" as GalleryCategory,
   "Malkhamb",
   [
-    "1-RwgAWwqSxBiF8L4AzzP1ZvEQJ3MhCT_",
-    "1-XbBQTnaWXuqiRNouAQDLMDOwbDb-M8y",
-    "106ioxdM67Sulw1kHzZt8I9lvI5yiGQtY",
-    "10I0M4N_It7wlhZLapJ9lxNUuGkH_lnaV",
-    "10geyEAOsvbB6O4fNSTNtvXBSz2MOFbId",
-    "10sUiSyEWM3xidVMU0G_hnY4m1Et5X6OH",
-    "10vPsj1SnAD0_IwtLA2J8MJ05WvSRt0cx",
-    "11aAsZLZzh5asAupZgRFKrgxWGAfOvcpV",
-    "13cq27ZpaDAyjLrjs0fZkg7C7m8uA8x1u",
-    "143NbtzTQCGo4-AWJ3gMdu0-_ha3JawYJ",
-    "14MY5-X76Brt2Y4KOAUm8TNz7xPpp2Vpd",
-    "14NsRS5CRxxnwDrmmoOVW9B_EgC5JDXLc",
-    "14Vb_9dKjA1OvmkN80Dh8ETcCnYjKN_T-",
-    "14mdnqgkWkrntMfijxSN96hHRK8KOJqNZ",
-    "14oqTcVzSwQH-65AabPO9NLbG1QL0mhK7",
-    "16zg2WN22sguQsCSwIk687H1VEUVO6GHj",
-    "17XygoyzLDGt4gX1YcvjgAsmv6mCTI-U-",
-    "17aLGZ4dIfkY0Ap93aPbt48Nexw63voza",
-    "17ulr62M1uZohrf8S9uuwj_BVos9jMmn3",
-    "18Q16ubv3NTGjrskkBdgiF03M7PeWE85K",
-    "18bwAoMkX30gmjRuRPkLEl59ZqRXmXZlx",
-    "18qjAFZ87pMYJSpmAyQBeNTsEvMJCoyXS",
-    "190RLIocHTJbpNLEqHDLY67YY1vW5gTuD",
-    "191LsOhdEbD7XvgrPngHWVHFUSPG47jKE",
-    "197eDhoP2Xh_bpr_gLyQIdCoFSjVGmrZw",
-    "1AcC3npzQv2pHbXhE0fQWWJhUMYOjVGsC",
-    "1BamJH5WtVlLFwXWJl5PF5NiZ98qgslYB",
-    "1C6N3s6bs7xqW5HkwFg8dGCEQmjapdZkC",
-    "1CGFKjBB_0BwD85ZfLvVPdDil4Kvm4QNQ",
-    "1Cox2DoiFUhB0GkYlzzfMUiRym4goLzMX",
-    "1CxLMO_088P3ZJ6U9UIKrPPTomub1C0EI",
-    "1DGNGuJazSZUrceLkl_jKM7IJZ5afn8e6",
-    "1DMhgT4sU4cPnv3PV4WL94G575e8B7AGg",
-    "1DkIigXhkoMh7uRWl19dVquTaY7BoacC8",
-    "1E0-sPo6wLj9ovfjNpvYFyh82mFvrxTrh",
-    "1E4iWqEXfHCQYbUEuHpMCYdsQ3Jf5jDvT",
-    "1EB5y7m1w8QLQ3drJxcKT1nVBj_DLzaJ-",
-    "1ECvTyIKvHhP8-EKcYYvIf2NvwfsM1GiZ",
-    "1F6d92I3Ly-8GNfW2Ibk1TQhrwNyH9Hf6",
-    "1GBleDQ6D-vzeHu6Kcx7YkweGkScC5GKC",
-    "1GsrsSkNQ6kbIKk_hlYrqKESJ54kHgXKk",
-    "1H0yJmTS3z63wlmbLljsyxQWla063kr7e",
-    "1H9_spn0lSODLa5vLhoA-uq0-s-KfUJyC",
-    "1I0svd4t9g_FXGRgdbvQuu8W5ujqVkS1H",
-    "1I1lPoyiMDCKjuAGFF_XQMzBSso8WmyPo",
-    "1IHCzqbIaJINI14XdTa6XkJjh5huPjhK8",
-    "1IdzA2kVg-MYXN-0k9FzgZOgOtaT5q1La",
-    "1IuMw1GyARvTshvOzEE0xVIVJqTm13y1g",
-    "1J6Xh5JxvjUDLE4NDnDdiKBRs49EYFYnJ",
-    "1JZOxjNL2LjlnXZPtemsDiYCyqlSoOhtw",
-    "1JhOmIlz-gVxkngo5InlPq5CtcyE0IIxB",
-    "1JpSB-cKslunJaivCrq5xYmiDT71aX9S-",
-    "1KX5Oznpy3aFc1veO8eUOz7K5VluQ5KX8",
-    "1L1iiLaXK44gbq1ib9IQQr66iZMfRdXMb",
-    "1L3VUZKLH5Tuv2rY6rS269kB_Ic8PE9Qd",
-    "1LRejo8NowQti0sH7AABfXDW6HlaR5N0a",
-    "1LV3pr9YupVghlAgx14HGyuvlnr8VQTZM",
-    "1NCzs0qy10xQuyOGOJ3d4FvX-iVvm7-RY",
-    "1NFIsiARl2SPhq642NxgkCJDgzW4UWtul",
-    "1NNWXCnhJKFCIz4yUbgdag1IOCU1jD9Ds",
-    "1NZw6-5mMdVG5CR8vzZrA7MBIRWSi_IwG",
-    "1NvcoUipxOja3UnK0ml6Xb2yZdQXgKfee",
-    "1OBOFcYnNG4hXkbQY0yAvTfnJ040mBEwz",
-    "1P1V7SNImawxICfLi5JcDxT-Zy6NPTPI7",
-    "1P76sYaobhcfNXNrMckYa2BUTJutP-v0b",
-    "1PS1ijpZAjV0TWBbdZtrq8wZ9XNoNC7l4",
-    "1QNdKWg4ul4_cfEPEwPFXU6MO-s3pfdVF",
-    "1Q_KLfGDtcz9h_okMdo0DAyDENXODgh1m",
-    "1Qhe9tsTofJHyvF7PHfYAAc3FFOEBLnUe",
-    "1R0YtlIcjB-XLWO4KAyHR2ZjoZCdoRmuo",
-    "1RBvXnMgSF-Q7FzSFdexRnwbSDSCN0tHo",
-    "1SeOt4qHCHpYj7Kn4hrWMfi5fI9vy43DF",
-    "1TADcipPexX0S2hTONckV-piZC0lw2uXH",
-    "1TY5T-eQSq4zg6KoMOYmgY5E2r6rDB1_W",
-    "1T_yX0yRv4lkL90Ta7WMXI1i1X4XwpvnB",
-    "1UQ6USiqfio3q7W836nZHopO8AEl2hrq8",
-    "1V5qi59s18nPFjIYgqDjLQKj0O8I8YR4D",
-    "1V5vLL1Bxric9ZGjike2GJfHGqYoCxVJ_",
-    "1V6QGGveSWhNzN0QxRzzoCRiyuoR2n-TL",
-    "1VVL3rN7MURR5MzqBNIyMhXV_zp5HKA5j",
-    "1VWQXYSY9rIQ6kVhkVX9Y1FeiM0iXrqXd",
-    "1Vqt5mYaTOL5mgzTOKBj61xb92VTWIYDA",
-    "1W2T4sGqJivG8ISjc117609zZS-gi_F5E",
-    "1XPJVrKp5c_eGURLJU9gKomfiFpAaZ37m",
-    "1XmrLWwjZf3YWd0eK7hT9p7vEpXrcCLod",
-    "1XwgWCBxNDfEeHPKG0TiOUJURitZW4JBR",
-    "1Y0aIMWPeZv2EfVC05_czDAni_BKeELXs",
-    "1Y44R9Tzj9pJ64vROlz-c4gqkmAoMyNSb",
-    "1YEiMcZQpHJQYbp9Cn6LTSGlMYP4BSuou",
-    "1YPVp6KQ5TQG3whB7jnpLhz55s5D2iOmI",
-    "1_6ymDzYnfmMlbW-vfpicZwYdSZKu0UHO",
-    "1a7JyquDx6RVU5ukeyYmDFK1QKX7KSOBT",
-    "1avA2ID-A3EJxu1xXLlS_u0r5U2BaYHik",
-    "1bq3GxbAQvKg-i8cHPHjbYEIWPSenzzlm",
-    "1bu0Czhv1ZUk-4sluU62h7ZFi5vlB_p_e",
-    "1c4UVH3itK1HnpcjtvDTFypF2hsmrHTJF",
-    "1c7mxeHJK5L-73bpATv4v2eX6c2bu0yIF",
-    "1cFb_zmUP5BKHmwI6A_6i14uQFlBJE6gc",
-    "1cdzpVO6ppKqxTipQvBK5zEFY0CPV4M1M",
-    "1d3NyC4aGZ8fPPmNX0Ryzc1aNDL-hjBdR",
-    "1d9KrHbZNs5a6y7nkyjRrirlJAgc27Zje",
-    "1eSmzJADUCBJjZt0UafCHwUwvnJwAyrfM",
-    "1eqBXRj4CzHS77ZDsm1jBzPf3dp39yHRB",
-    "1fOonoxRP0wpayFpTipacHmqMsKErkfc7",
-    "1gVwLllQNIu3OuAh5_06ZOy-FK1Zz21wR",
-    "1hswWpSKOv0dwdaF3Gq_3wLNaWNHdg80Q",
-    "1hudYxi00eA2ssYgqDVm89wMl5cs5KW1F",
-    "1i-brPuS5Cx-U7nhebHDCrFFtQbbkD5gf",
-    "1iEHYHPtJmtubnMOj-r1AV-QYPFgqJwwN",
-    "1ieMRM5xmQDe0Cm7twvSnDwhf0Po2fr0_",
-    "1jSZ4Pvt0Qd2RJJebBcpTHnIjkyQ4KcOb",
-    "1jc5LLIorQmcXhbxlGgxTkAiWar-ASlot",
-    "1jgcNQSKFTICKv1deSU0lPRsK1Nbjp4Xv",
-    "1jokiT0TL-w5lNJ3FMNGFmfJrCXb2i-Sg",
-    "1jtIY_fAlO_5UiCDWVRJSi52eXWZ_K6qd",
-    "1k2Vm1RbzZsvvrgUUO49wpG-RzC58RbZW",
-    "1kTXlKiptj4kAneKrZc7uoJ9yjWOOM6BB",
-    "1kneuNZ4hjTzmFFawTTWhekxMIeOAIVML",
-    "1m6W47XWj5rdTSTlbKx0bCncCWOsrMkkx",
-    "1mQDYzV2nPlEq-e4ec633bSRanm3bS_vy",
-    "1mV-Yj4JJ9qGHT0XzOA5T5i2mAFSajreZ",
-    "1mlxh135iMEjHoVlYsSfvoexhrADRmH49",
-    "1mqI-9_xdp-Vtueh6luHFa1erRYVw54aW",
-    "1mwlvoZeX3x9aU4LfdivFpjQT09RcADNd",
-    "1n6nTsGBsplUDqkM1tFC3R4xA1Ply2i2A",
-    "1nhisP0MOL2aTxndEELiVm9ksFxHHicg8",
-    "1nrpQatE1bzZAW-ncSm5IJL3MNyJGA9wq",
-    "1pglvNmqwClQk8OjiYgNLFlwJxQwISBJT",
-    "1pm5Hw0czzlKZrAZBhYugfysixc-5Mkjv",
-    "1pmgpfs-_lpZQUrlhst6qHsvTekIXVy7R",
-    "1pxwWogBD_sDpnM80-wIyo6JhA7w3ZwkA",
-    "1qD3W-tT1FPXTvq_J_EIUlTW2aVpDUIKG",
-    "1qOLdLhK4REEpDXttD0fzYjyf6W106wwk",
-    "1qwpKseMufmFs7mbo-YibCgPEn7GDvd6a",
-    "1r-6b8LlNJaKO0PxTMvagVyzlbOaXSpbt",
-    "1sPVzVX9q-PXSDpfj7xkPznOtAxgLQ416",
-    "1smJ1T8mbdbrcFNIn-ClPZpYevv-965xu",
-    "1sowMFjYilVPPGi1dfDLk_wNxUzZvXHgW",
-    "1tJqeqG42tIWWrOxPYFiUOcB5eJcF3MA-",
-    "1te3Yo-X1fm_SE1dp4zKQpUG7MKkiBi1w",
-    "1uMGpQbVOew5NGDbYZCgCL6ljpDP7ez1K",
-    "1uNOxv3L4OJ8rk0kfCG9AnNAe_J31_dix",
-    "1v1qmq7qDHkdAtjHd-1DxA0By5iBEX_1Y",
-    "1vv5KRYNVRnmBPm7q6D-zYsYERxt5jjtb",
-    "1wRN7L9sct0T8nDlBzTlSV3pmD53lgNA1",
-    "1waiwrbO2fgeBd3WRHLDvddh02tAAXtYK",
-    "1xD71gdo0dt-_IORMagGN8doiXi-Pg8sK",
-    "1xZOUvRWE2t2oram8TEh2zKS_GmupexEv",
-    "1yCBRUktJN0UDiMMKBbR8TsotHvlpj2ck",
-    "1yHgopUbstacM5SkRgns2LP2XpMxfO9u4",
-    "1yVKYyRxE3wLbpt9JI0QOUyK50Rcfrohg",
+    "1a7JyquDx6RVU5ukeyYmDFK1QK7KSOBT",
   ],
 );
 
 /* ============================================================
-   COMBINE EXISTING LOCAL DATA + DRIVE DATA
+   COMBINED GALLERY
    ============================================================ */
 
 const combinedGalleryItems = [
   ...galleryItems,
   ...driveGalleryItems,
 ];
+
+/* ============================================================
+   YOUTUBE VIDEO DATA
+   ============================================================ */
+
+type YouTubeVideo = {
+  id: string;
+  title: string;
+  aspect: "16:9" | "9:16";
+};
+
+/* ------------------------------------------------------------
+   16:9 VIDEOS
+   ------------------------------------------------------------ */
+
+const youtubeVideos16x9: YouTubeVideo[] = [
+  {
+    id: "Ntm5BAffvas",
+    title:
+      "🌊 Murukeri Lake | முருக்கேரி ஏரி 💧🌿",
+    aspect: "16:9",
+  },
+  {
+    id: "QPLpPZTDf_E",
+    title:
+      "MUTHAMPALAYAM NEWS | 🌊 Muthampalayam Lake | முத்தாம்பாளையம் ஏரி 💧🌿",
+    aspect: "16:9",
+  },
+  {
+    id: "-hlDW3CoauY",
+    title:
+      "🌊 Muthampalayam Lake | முத்தாம்பாளையம் ஏரி 💧🌿",
+    aspect: "16:9",
+  },
+  {
+    id: "Zi6kv3pPDR8",
+    title:
+      "🌊 Muthampalayam Lake | முத்தாம்பாளையம் ஏரி 💧🌿",
+    aspect: "16:9",
+  },
+  {
+    id: "zPysaF4lNRk",
+    title:
+      "🌊 Nanthan Kaalvaai Scheme | நந்தன் கால்வாய் திட்டம் 💧🌱",
+    aspect: "16:9",
+  },
+];
+
+/* ------------------------------------------------------------
+   9:16 SHORTS
+   ------------------------------------------------------------ */
+
+const youtubeVideos9x16: YouTubeVideo[] = [
+  {
+    id: "S575c64PrgY",
+    title:
+      "🌊 Tindivanam Lake — 1 Lakh Seeds Sowed 🌱💧",
+    aspect: "9:16",
+  },
+  {
+    id: "58kVDVE7sp0",
+    title:
+      "🌊 Tindivanam Neeramaipu Kulu | திண்டிவனம் நீரமைப்புக் குழு 💧🌿",
+    aspect: "9:16",
+  },
+  {
+    id: "0iqAtAs2A_E",
+    title:
+      "🌊 Murukkeri Lake — A Journey Towards Restoration 💧🌿",
+    aspect: "9:16",
+  },
+  {
+    id: "W7SJdIkyYZU",
+    title:
+      "🌊 Koliyanur Lake — Thamarai Seed Sowed",
+    aspect: "9:16",
+  },
+  {
+    id: "n4q-bRpc4I8",
+    title:
+      "🌊 Ariyalur Lake — Before & After Transformation ✨",
+    aspect: "9:16",
+  },
+  {
+    id: "j1yKZckLzFQ",
+    title:
+      "Infosys partners with KNFT 🤝✨",
+    aspect: "9:16",
+  },
+  {
+    id: "hIXwleFKx5s",
+    title:
+      "🌊 Kakuppam Lake — BEFORE vs AFTER 😱",
+    aspect: "9:16",
+  },
+  {
+    id: "2PEoDIPVOuE",
+    title:
+      "விழுப்புரம் மாவட்ட நிர்வாகம், நகராட்சி மற்றும் தன்னார்வலர்களின் கூட்டு முயற்சி",
+    aspect: "9:16",
+  },
+];
+
+/* ============================================================
+   YOUTUBE EMBED
+   ============================================================ */
+
+function YouTubeVideoCard({
+  video,
+}: {
+  video: YouTubeVideo;
+}) {
+  const isVertical = video.aspect === "9:16";
+
+  return (
+    <article
+      className="
+        overflow-hidden
+        rounded-2xl
+        border
+        border-border
+        bg-background
+        shadow-sm
+        transition-all
+        duration-300
+        hover:-translate-y-1
+        hover:shadow-lg
+      "
+    >
+      <div
+        className={
+          isVertical
+            ? "mx-auto aspect-[9/16] w-full max-w-[300px] bg-black"
+            : "aspect-video w-full bg-black"
+        }
+      >
+        <iframe
+          src={`https://www.youtube.com/embed/${video.id}`}
+          title={video.title}
+          className="h-full w-full"
+          loading="lazy"
+          allow="
+            accelerometer;
+            autoplay;
+            clipboard-write;
+            encrypted-media;
+            gyroscope;
+            picture-in-picture;
+            web-share
+          "
+          allowFullScreen
+          referrerPolicy="strict-origin-when-cross-origin"
+        />
+      </div>
+
+      <div className="p-4">
+        <p className="text-sm font-semibold leading-6 text-foreground">
+          {video.title}
+        </p>
+      </div>
+    </article>
+  );
+}
+
+/* ============================================================
+   GALLERY IMAGE
+   ============================================================ */
+
+function GalleryImage({
+  src,
+  fallbackSrc,
+  alt,
+}: {
+  src?: string;
+  fallbackSrc?: string;
+  alt: string;
+}) {
+  const [currentSrc, setCurrentSrc] =
+    useState(src);
+
+  return (
+    <div
+      className="
+        group
+        relative
+        aspect-[4/3]
+        overflow-hidden
+        rounded-xl
+        bg-muted
+      "
+    >
+      {currentSrc && (
+        <>
+          <img
+            src={currentSrc}
+            alt={alt}
+            className="
+              h-full
+              w-full
+              object-cover
+              transition-transform
+              duration-700
+              group-hover:scale-105
+            "
+            loading="lazy"
+            decoding="async"
+            referrerPolicy="no-referrer"
+            onError={() => {
+              if (
+                fallbackSrc &&
+                currentSrc !== fallbackSrc
+              ) {
+                setCurrentSrc(fallbackSrc);
+              }
+            }}
+          />
+
+          <div
+            className="
+              pointer-events-none
+              absolute
+              inset-0
+              bg-gradient-to-t
+              from-black/35
+              via-transparent
+              to-transparent
+            "
+          />
+        </>
+      )}
+    </div>
+  );
+}
 
 /* ============================================================
    ROUTE
@@ -638,72 +720,7 @@ export const Route = createFileRoute("/gallery")({
 });
 
 /* ============================================================
-   IMAGE COMPONENT
-   ============================================================ */
-
-function GalleryImage({
-  src,
-  alt,
-  ratio = "aspect-[4/3]",
-}: {
-  src?: string;
-  alt: string;
-  ratio?: string;
-}) {
-  return (
-    <div
-      className={`
-        group
-        relative
-        overflow-hidden
-        rounded-xl
-        bg-muted
-        ${ratio}
-      `}
-    >
-      {src ? (
-        <>
-          <img
-            src={src}
-            alt={alt}
-            className="
-              h-full
-              w-full
-              object-cover
-              transition-transform
-              duration-700
-              group-hover:scale-105
-            "
-            loading="lazy"
-            decoding="async"
-            referrerPolicy="no-referrer"
-          />
-
-          <div
-            className="
-              pointer-events-none
-              absolute
-              inset-0
-              bg-gradient-to-t
-              from-black/35
-              via-transparent
-              to-transparent
-              opacity-70
-              transition-opacity
-              duration-300
-              group-hover:opacity-100
-            "
-          />
-        </>
-      ) : (
-        <div className="h-full w-full bg-muted" />
-      )}
-    </div>
-  );
-}
-
-/* ============================================================
-   GALLERY PAGE
+   MAIN GALLERY
    ============================================================ */
 
 function Gallery() {
@@ -714,10 +731,6 @@ function Gallery() {
     src: string;
     caption: string;
   } | null>(null);
-
-  /* ==========================================================
-     FILTER
-     ========================================================== */
 
   const items = useMemo(() => {
     if (active === "All") {
@@ -733,7 +746,7 @@ function Gallery() {
     <>
       {/* ======================================================
           HERO
-          ====================================================== */}
+      ====================================================== */}
 
       <PageHero
         eyebrow="Gallery"
@@ -743,11 +756,9 @@ function Gallery() {
 
       {/* ======================================================
           PHOTO GALLERY
-          ====================================================== */}
+      ====================================================== */}
 
       <Section>
-        {/* FILTERS */}
-
         <div className="flex flex-wrap gap-2">
           {galleryCategories.map((category) => (
             <button
@@ -775,14 +786,12 @@ function Gallery() {
           ))}
         </div>
 
-        {/* COUNT */}
-
         <p className="mt-5 text-sm text-muted-foreground">
           {items.length}{" "}
-          {items.length === 1 ? "photo" : "photos"}
+          {items.length === 1
+            ? "photo"
+            : "photos"}
         </p>
-
-        {/* GRID */}
 
         <motion.div
           layout
@@ -808,7 +817,8 @@ function Gallery() {
                       setLightbox({
                         src: imageSrc,
                         caption:
-                          item.caption || "KNFT Gallery",
+                          item.caption ||
+                          "KNFT Gallery",
                       });
                     }
                   }}
@@ -826,12 +836,6 @@ function Gallery() {
                   }}
                   transition={{
                     duration: 0.3,
-                    ease: [
-                      0.22,
-                      1,
-                      0.36,
-                      1,
-                    ],
                   }}
                   className="
                     group
@@ -846,19 +850,21 @@ function Gallery() {
                 >
                   <GalleryImage
                     src={imageSrc}
+                    fallbackSrc={
+                      "fallbackSrc" in item
+                        ? item.fallbackSrc
+                        : undefined
+                    }
                     alt={
                       item.caption ||
                       "KNFT community activity"
                     }
-                    ratio="aspect-[4/3]"
                   />
                 </motion.button>
               );
             })}
           </AnimatePresence>
         </motion.div>
-
-        {/* EMPTY */}
 
         {items.length === 0 && (
           <div
@@ -873,63 +879,99 @@ function Gallery() {
             "
           >
             <p className="text-muted-foreground">
-              No photographs available in this
-              category yet.
+              No photographs available in
+              this category yet.
             </p>
           </div>
         )}
       </Section>
 
       {/* ======================================================
-          VIDEO GALLERY
-          ====================================================== */}
+          WATCH THE WORK
+      ====================================================== */}
 
       <Section tone="muted">
         <SectionHeading
-          eyebrow="Video Gallery"
-          title="Watch the work"
-          subtitle="Videos from KNFT's field activities, awareness programmes and community initiatives."
+          eyebrow="Watch the Work"
+          title="See the change in action"
+          subtitle="Watch KNFT's lake restoration, environmental and community initiatives."
         />
 
-        <div
-          className="
-            mt-10
-            grid
-            gap-5
-            sm:grid-cols-2
-            lg:grid-cols-3
-          "
-        >
-          {videoItems.map((video) => (
-            <div
-              key={video.id}
-              className="
-                surface-card
-                overflow-hidden
-                p-4
-                transition-all
-                duration-300
-                hover:-translate-y-1
-                hover:shadow-lift
-              "
-            >
-              <VideoPlaceholder
-                url={video.url || undefined}
-                poster={video.poster || undefined}
-                label="KNFT VIDEO"
-              />
+        {/* ====================================================
+            16:9 VIDEOS
+        ==================================================== */}
 
-              <p className="mt-3 px-1 text-sm font-semibold">
-                {video.title}
-              </p>
-            </div>
-          ))}
+        <div className="mt-10">
+          <div className="mb-6">
+            <h3 className="text-xl font-bold tracking-tight">
+              16:9 Videos
+            </h3>
+
+            <p className="mt-1 text-sm text-muted-foreground">
+              Full-length stories and project coverage
+              from KNFT's field work.
+            </p>
+          </div>
+
+          <div
+            className="
+              grid
+              gap-6
+              md:grid-cols-2
+              xl:grid-cols-3
+            "
+          >
+            {youtubeVideos16x9.map(
+              (video) => (
+                <YouTubeVideoCard
+                  key={video.id}
+                  video={video}
+                />
+              ),
+            )}
+          </div>
+        </div>
+
+        {/* ====================================================
+            9:16 VIDEOS
+        ==================================================== */}
+
+        <div className="mt-16">
+          <div className="mb-6">
+            <h3 className="text-xl font-bold tracking-tight">
+              9:16 Shorts
+            </h3>
+
+            <p className="mt-1 text-sm text-muted-foreground">
+              Short videos and quick updates from
+              KNFT's activities.
+            </p>
+          </div>
+
+          <div
+            className="
+              grid
+              gap-6
+              sm:grid-cols-2
+              md:grid-cols-3
+              lg:grid-cols-4
+            "
+          >
+            {youtubeVideos9x16.map(
+              (video) => (
+                <YouTubeVideoCard
+                  key={video.id}
+                  video={video}
+                />
+              ),
+            )}
+          </div>
         </div>
       </Section>
 
       {/* ======================================================
           LIGHTBOX
-          ====================================================== */}
+      ====================================================== */}
 
       <AnimatePresence>
         {lightbox && (
@@ -944,7 +986,7 @@ function Gallery() {
               flex
               items-center
               justify-center
-              bg-charcoal/90
+              bg-black/90
               p-4
               sm:p-6
             "
@@ -968,12 +1010,6 @@ function Gallery() {
               }}
               transition={{
                 duration: 0.25,
-                ease: [
-                  0.22,
-                  1,
-                  0.36,
-                  1,
-                ],
               }}
               className="
                 relative
@@ -984,8 +1020,6 @@ function Gallery() {
                 event.stopPropagation()
               }
             >
-              {/* CLOSE */}
-
               <button
                 type="button"
                 onClick={() =>
@@ -1014,8 +1048,6 @@ function Gallery() {
               >
                 <X className="h-5 w-5" />
               </button>
-
-              {/* IMAGE */}
 
               <div
                 className="

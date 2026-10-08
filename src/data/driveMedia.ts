@@ -1,17 +1,20 @@
 /**
  * KNFT — Google Drive Media Mapping
  *
- * Central source for all media that was previously loaded from local
- * src/assets folders.
+ * All KNFT remote media is centralized here.
  *
  * IMPORTANT:
- * - Images use Google Drive's `uc?export=view&id=` endpoint.
- * - Videos use `uc?export=download&id=`.
- * - The Drive files must be shared so the deployed website can access them.
+ * Every Google Drive file must be:
  *
- * Do not put the Google Docs document from the MALKHAMB list here;
- * it is not an image/video asset.
+ * Share
+ * → General access
+ * → Anyone with the link
+ * → Viewer
  */
+
+/* =========================================================
+   TYPES
+   ========================================================= */
 
 export type DriveMediaItem = {
   id: string;
@@ -19,11 +22,33 @@ export type DriveMediaItem = {
   type: "image" | "video";
 };
 
-export const driveImage = (id: string) =>
-  `https://drive.google.com/thumbnail?id=${id}&sz=w2000`;
+/* =========================================================
+   GOOGLE DRIVE URL HELPERS
+   ========================================================= */
 
-export const driveVideo = (id: string) =>
-  `https://drive.google.com/uc?export=download&id=${id}`;
+/**
+ * Google Drive image.
+ *
+ * thumbnail endpoint is used because it works better with
+ * <img> elements on deployed/Vercel websites.
+ */
+export const driveImage = (id: string): string => {
+  return `https://drive.google.com/thumbnail?id=${id}&sz=w2000`;
+};
+
+/**
+ * Google Drive video.
+ */
+export const driveVideo = (id: string): string => {
+  return `https://drive.google.com/uc?export=download&id=${id}`;
+};
+
+/**
+ * Normal Google Drive file URL.
+ */
+export const driveFile = (id: string): string => {
+  return `https://drive.google.com/file/d/${id}/view?usp=drive_link`;
+};
 
 /* =========================================================
    01 WATER RESTORATION
@@ -265,7 +290,7 @@ export const treePlantation = [
   "1rjuAHwHx1nmQf_BhHKzjVX-5ilV4dpt9",
   "1uJ2LgJfQ0gIcjnmxadVh1yyrE4xulgeq",
   "1vEHKDL6wx7F2vjP87-M61PpTmDFr7-5l",
-  "1xwmbxla7rVAlxFId0DgEyJ6l28E0o5t9",
+  "1xwmbxla7rVAlxFId0gEyJ6l28E0o5t9",
 ].map(driveImage);
 
 /* =========================================================
@@ -273,7 +298,9 @@ export const treePlantation = [
    ========================================================= */
 
 export const aboutHeroVideos = {
-  horizontal: driveVideo("1-3Z2UQQerhD4qH8w9mkpCPSHgTuOFqOY"),
+  horizontal: driveVideo(
+    "1-3Z2UQQerhD4qH8w9mkpCPSHgTuOFqOY",
+  ),
 
   vertical: [
     "1oD2iwdrgMGF9OMjbIonBBTvaUgQbsfkw",
@@ -532,7 +559,7 @@ export const knftLogo = driveImage(
 );
 
 /* =========================================================
-   ALL MEDIA — convenient grouped export
+   ALL MEDIA
    ========================================================= */
 
 export const driveMedia = {
