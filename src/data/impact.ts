@@ -116,19 +116,19 @@ export const socialImpact: Stat[] = [
 
 /* ============================================================
    IMPACT STORIES
+
+   Images are mapped from Google Drive through driveMedia.ts.
+   No local image imports are required.
    ============================================================ */
 
-import subasreeImage1 from "@/assets/SPORTS/RUNNING/WhatsApp Image 2026-09-25 at 22.12.16.jpeg";
+import { driveMedia } from "@/data/driveMedia";
 
-import subasreeImage2 from "@/assets/SPORTS/RUNNING/WhatsApp Image 2026-09-25 at 22.12.16 (1).jpeg";
-
-import subasreeImage3 from "@/assets/SPORTS/RUNNING/WhatsApp Image 2026-09-25 at 22.12.16 (2).jpeg";
-
-import subasreeImage4 from "@/assets/SPORTS/RUNNING/WhatsApp Image 2026-09-25 at 22.12.17.jpeg";
-
-import subasreeImage5 from "@/assets/SPORTS/RUNNING/WhatsApp Image 2026-09-25 at 22.12.17 (1).jpeg";
-
-import subasreeImage6 from "@/assets/SPORTS/RUNNING/WhatsApp Image 2026-09-25 at 22.12.18.jpeg";
+const subasreeImages: StoryImage[] = (
+  driveMedia.sports.running ?? []
+).map((src, index) => ({
+  src,
+  alt: `Subasree running journey image ${index + 1}`,
+}));
 
 export const impactStories: Story[] = [
   {
@@ -141,32 +141,7 @@ export const impactStories: Story[] = [
     summary:
       "A journey highlighting how support, training and opportunity can help create meaningful change in an individual's life.",
 
-    images: [
-      {
-        src: subasreeImage1,
-        alt: "Subasree during her running journey",
-      },
-      {
-        src: subasreeImage2,
-        alt: "Subasree during training",
-      },
-      {
-        src: subasreeImage3,
-        alt: "Subasree sports activity",
-      },
-      {
-        src: subasreeImage4,
-        alt: "Subasree participating in running",
-      },
-      {
-        src: subasreeImage5,
-        alt: "Subasree achievement journey",
-      },
-      {
-        src: subasreeImage6,
-        alt: "Subasree sports achievement",
-      },
-    ],
+    images: subasreeImages,
   },
 ];
 

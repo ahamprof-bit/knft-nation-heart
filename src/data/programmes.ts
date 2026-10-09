@@ -12,22 +12,10 @@ import {
   Users,
 } from "lucide-react";
 
-// =====================================================
-// PROGRAMME IMAGES
-// =====================================================
+import { driveMedia } from "@/data/driveMedia";
 
-// Gallery images
-import aboutImage1 from "@/assets/GALLERY/Polish_20250208_071036066.jpg";
-import aboutImage2 from "@/assets/GALLERY/Polish_20250301_095608729.jpg";
-
-// Muthampalayam Lake images
-import lakeImage1 from "@/assets/01 WATER RESTORATION/lakes projects/MUTHAMPALAYAM LAKE IMAGES/IMG-20250628-WA0004.jpg";
-import lakeImage2 from "@/assets/01 WATER RESTORATION/lakes projects/MUTHAMPALAYAM LAKE IMAGES/IMG-20250703-WA0032.jpg";
-
-// Mallakhamb / Sports image
-import malkhambImage from "@/assets/SPORTS/Malkhamb_/IMG20250416111608_01.jpg";
 // =====================================================
-// TYPE
+// TYPES
 // =====================================================
 
 export type Programme = {
@@ -36,6 +24,64 @@ export type Programme = {
   icon: LucideIcon;
   description: string;
   image: string;
+};
+
+// =====================================================
+// GOOGLE DRIVE IMAGE HELPER
+// =====================================================
+
+// Converts a Google Drive file ID to a thumbnail URL.
+// Use IDs for files shared as "Anyone with the link - Viewer".
+
+const driveImage = (fileId: string) =>
+  `https://drive.google.com/thumbnail?id=${fileId}&sz=w1200`;
+
+// =====================================================
+// PROGRAMME IMAGES
+// =====================================================
+
+// Reuse the existing KNFT Google Drive media mapping.
+// Update the property names below if your driveMedia.ts
+// uses different names for these categories.
+
+const programmeImages = {
+  waterRestoration:
+    driveMedia.waterRestoration?.[0] ??
+    driveImage("1BdgKv85rIOfvFVaMyu8T9iiDLltIQUCb"),
+
+  environment:
+    driveMedia.environment?.[0] ??
+    driveMedia.sports.running?.[0] ??
+    driveImage("1gepyGtSwoQZdHgky4_wSKYZmJdE-DYgv"),
+
+  disasterRelief:
+    driveMedia.disasterRelief?.[0] ??
+    driveImage("1hmdGWXcJREs2EpmpWv_Ld-kgOhcaAtZu"),
+
+  bloodDonation:
+    driveMedia.bloodDonation?.[0] ??
+    driveImage("15mVnPPFQUOaimeHxiKTLjDAwSLMZM7Gw"),
+
+  povertyHunger:
+    driveMedia.povertyHunger?.[0] ??
+    driveImage("1sH_wh0zZXPGm1-xOrbEYvLGh_5YLIZhe"),
+
+  youthEmpowerment:
+    driveMedia.youthEmpowerment?.[0] ??
+    driveMedia.sports.running?.[0] ??
+    driveImage("1gepyGtSwoQZdHgky4_wSKYZmJdE-DYgv"),
+
+  education:
+    driveMedia.education?.[0] ??
+    driveImage("15mVnPPFQUOaimeHxiKTLjDAwSLMZM7Gw"),
+
+  sportsArts:
+    driveMedia.sports.running?.[0] ??
+    driveImage("1gepyGtSwoQZdHgky4_wSKYZmJdE-DYgv"),
+
+  communityDevelopment:
+    driveMedia.communityDevelopment?.[0] ??
+    driveImage("1sH_wh0zZXPGm1-xOrbEYvLGh_5YLIZhe"),
 };
 
 // =====================================================
@@ -49,7 +95,7 @@ export const programmes: Programme[] = [
     icon: Droplets,
     description:
       "Reviving lakes, ponds and traditional water bodies with community participation.",
-    image: lakeImage1,
+    image: programmeImages.waterRestoration,
   },
 
   {
@@ -58,7 +104,7 @@ export const programmes: Programme[] = [
     icon: Leaf,
     description:
       "Tree plantation, palm seed sowing, nurseries and habitat protection.",
-    image: malkhambImage,
+    image: programmeImages.environment,
   },
 
   {
@@ -67,7 +113,7 @@ export const programmes: Programme[] = [
     icon: LifeBuoy,
     description:
       "Volunteer response and relief support during emergencies.",
-    image: aboutImage1,
+    image: programmeImages.disasterRelief,
   },
 
   {
@@ -76,7 +122,7 @@ export const programmes: Programme[] = [
     icon: HeartPulse,
     description:
       "Donor mobilisation and camps connecting people in need.",
-    image: aboutImage2,
+    image: programmeImages.bloodDonation,
   },
 
   {
@@ -85,7 +131,7 @@ export const programmes: Programme[] = [
     icon: UtensilsCrossed,
     description:
       "Food and essential support for families facing hardship.",
-    image: lakeImage2,
+    image: programmeImages.povertyHunger,
   },
 
   {
@@ -94,7 +140,7 @@ export const programmes: Programme[] = [
     icon: Rocket,
     description:
       "Building confidence, skills and leadership opportunities for young people.",
-    image: aboutImage1,
+    image: programmeImages.youthEmpowerment,
   },
 
   {
@@ -103,7 +149,7 @@ export const programmes: Programme[] = [
     icon: GraduationCap,
     description:
       "Learning support and training programmes for children.",
-    image: aboutImage1,
+    image: programmeImages.education,
   },
 
   {
@@ -112,7 +158,7 @@ export const programmes: Programme[] = [
     icon: Trophy,
     description:
       "Encouraging sports and keeping traditional arts alive.",
-    image: malkhambImage,
+    image: programmeImages.sportsArts,
   },
 
   {
@@ -121,6 +167,6 @@ export const programmes: Programme[] = [
     icon: Users,
     description:
       "Local initiatives that strengthen everyday community life.",
-    image: lakeImage2,
+    image: programmeImages.communityDevelopment,
   },
 ];
