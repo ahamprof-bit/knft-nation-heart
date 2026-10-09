@@ -3,11 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { X } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import {
-  galleryCategories,
-  galleryItems,
-  type GalleryCategory,
-} from "@/data/gallery";
+import type { GalleryCategory } from "@/data/gallery";
 
 import {
   PageHero,
@@ -24,7 +20,7 @@ import {
  * Google Drive from throttling a large gallery.
  */
 function driveImage(fileId: string) {
-  return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1200`;
+  return `https://drive.google.com/thumbnail?id=${fileId}&sz=w640`;
 }
 
 function driveImageFallback(fileId: string) {
@@ -455,9 +451,13 @@ addDriveFiles(
    COMBINED GALLERY
    ============================================================ */
 
-const combinedGalleryItems = [
-  ...galleryItems,
-  ...driveGalleryItems,
+const combinedGalleryItems = driveGalleryItems;
+
+const availableGalleryCategories: GalleryCategory[] = [
+  "All",
+  ...Array.from(
+    new Set(driveGalleryItems.map((item) => item.category)),
+  ),
 ];
 
 /* ============================================================
@@ -668,6 +668,7 @@ function GalleryImage({
             "
             loading="lazy"
             decoding="async"
+            fetchPriority="low"
             referrerPolicy="no-referrer"
             onError={() => {
               if (
@@ -751,14 +752,8 @@ function Gallery() {
   const [active, setActive] =
     useState<GalleryCategory>("All");
 
-  /*
-   * IMPORTANT:
-   * Only 48 images are rendered initially.
-   * This prevents hundreds of Google Drive thumbnail
-   * requests from firing at the same time.
-   */
   const [visibleCount, setVisibleCount] =
-    useState(48);
+    useState(24);
 
   const [lightbox, setLightbox] = useState<{
     src: string;
@@ -797,7 +792,7 @@ function Gallery() {
     category: GalleryCategory,
   ) {
     setActive(category);
-    setVisibleCount(48);
+    setVisibleCount(24);
   }
 
   /* ==========================================================
@@ -807,7 +802,7 @@ function Gallery() {
   function handleLoadMore() {
     setVisibleCount((current) =>
       Math.min(
-        current + 48,
+        current + 24,
         items.length,
       ),
     );
@@ -835,7 +830,7 @@ function Gallery() {
         ==================================================== */}
 
         <div className="flex flex-wrap gap-2">
-          {galleryCategories.map((category) => (
+          {availableGalleryCategories.map((category) => (
             <button
               key={category}
               type="button"
@@ -911,7 +906,7 @@ function Gallery() {
                     onClick={() => {
                       if (imageSrc) {
                         setLightbox({
-                          src: imageSrc,
+                          src: ("fallbackSrc" in item && item.fallbackSrc) ? item.fallbackSrc : imageSrc,
                           caption:
                             item.caption ||
                             "KNFT Gallery",
