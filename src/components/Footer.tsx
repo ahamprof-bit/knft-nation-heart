@@ -1,10 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { Facebook, Mail } from "lucide-react";
 import { siteConfig, navLinks } from "@/data/siteConfig";
-import logo from "@/assets/knft-logo.png.jpg";
+
+const LOGO_FILE_ID = "1pM4NvpqzJ3rY9wrHVP97GA9aF3g_CJLc";
+
+const logoUrl = `https://drive.google.com/thumbnail?id=${LOGO_FILE_ID}&sz=w400`;
 
 const quickLinks = navLinks.filter(
-  (link) => link.to !== "/contact"
+  (link) => link.to !== "/contact",
 );
 
 const actionLinks = [
@@ -27,7 +30,6 @@ export function Footer() {
     <footer className="bg-forest text-primary-foreground">
       {/* Main Footer */}
       <div className="mx-auto grid w-full max-w-7xl gap-10 px-5 py-16 sm:px-8 lg:grid-cols-4">
-
         {/* Organisation */}
         <div>
           <Link
@@ -35,10 +37,29 @@ export function Footer() {
             className="inline-flex items-center gap-3"
           >
             <img
-              src={logo}
+              src={logoUrl}
               alt="Kalam Nation First Trust Logo"
-              className="h-14 w-14 shrink-0 rounded-lg object-contain"
+              className="h-14 w-14 shrink-0 rounded-lg bg-white object-contain p-1"
+              loading="lazy"
+              decoding="async"
+              onError={(event) => {
+                const image = event.currentTarget;
+                image.style.display = "none";
+
+                const fallback = image.nextElementSibling;
+                if (fallback instanceof HTMLElement) {
+                  fallback.style.display = "flex";
+                }
+              }}
             />
+
+            {/* Text fallback if Drive logo cannot load */}
+            <div
+              className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-white text-xs font-bold text-emerald-900"
+              aria-label="KNFT"
+            >
+              KNFT
+            </div>
 
             <div className="flex flex-col leading-tight">
               <span className="font-display text-sm font-bold tracking-wide text-white sm:text-base">
@@ -62,7 +83,7 @@ export function Footer() {
           >
             <Mail
               className="h-4 w-4"
-              aria-hidden
+              aria-hidden="true"
             />
 
             {siteConfig.email}
@@ -80,7 +101,7 @@ export function Footer() {
               >
                 <Facebook
                   className="h-4 w-4"
-                  aria-hidden
+                  aria-hidden="true"
                 />
               </a>
             </div>
@@ -113,9 +134,7 @@ export function Footer() {
             © {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
           </p>
 
-          <p>
-            {siteConfig.tagline}
-          </p>
+          <p>{siteConfig.tagline}</p>
         </div>
       </div>
     </footer>
