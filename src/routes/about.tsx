@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { organisation } from "@/data/organisation";
+import { organisation, registration } from "@/data/organisation";
 
 import { AvatarPlaceholder } from "@/components/placeholders";
 
@@ -42,6 +42,12 @@ export const Route = createFileRoute("/about")({
           "Volunteer-led since 2012 — our story, vision, mission, values and journey towards meaningful social impact.",
       },
     ],
+    links: [
+      {
+        rel: "canonical",
+        href: "https://kalamnationfirsttrust.com/about",
+      },
+    ],
   }),
 
   component: About,
@@ -52,6 +58,16 @@ export const Route = createFileRoute("/about")({
    ========================================================= */
 
 function About() {
+  // Legal details are shown only when KNFT has supplied verified values.
+  const registrationRows: [string, string][] = [
+    ["Legal name", registration.legalName],
+    ["Registration type", registration.registrationType],
+    ["Registration date", registration.registrationDate],
+    ["Registration number", registration.registrationNumber],
+    ["Registered office", registration.registeredOffice],
+    ["Tax benefits", registration.taxBenefitsNote],
+  ].filter((row): row is [string, string] => Boolean(row[1]));
+
   return (
     <>
       {/* =====================================================
@@ -113,6 +129,40 @@ function About() {
           </Reveal>
         </div>
       </Section>
+
+      {/* =====================================================
+          LEGAL & REGISTRATION (only when verified data exists)
+          Volunteer-led origin (2012) is separate from the Trust's
+          formal registration.
+      ===================================================== */}
+
+      {registrationRows.length > 0 && (
+        <Section>
+          <div className="mx-auto max-w-3xl">
+            <SectionHeading
+              eyebrow="Legal & Registration"
+              title="Our formal structure."
+            />
+
+            <p className="mt-5 leading-7 text-muted-foreground">
+              KNFT began as a volunteer-led initiative in 2012 and has since
+              been formally structured as a Trust. Official details are below.
+            </p>
+
+            <dl className="mt-8 divide-y divide-border rounded-2xl border border-border">
+              {registrationRows.map(([label, value]) => (
+                <div
+                  key={label}
+                  className="grid gap-1 p-4 sm:grid-cols-[200px_1fr] sm:gap-4"
+                >
+                  <dt className="text-sm font-semibold">{label}</dt>
+                  <dd className="text-sm text-muted-foreground">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </Section>
+      )}
 
       {/* =====================================================
           OUR JOURNEY
@@ -294,7 +344,7 @@ function About() {
           {organisation.values.map((value, index) => (
             <StaggerItem
               key={value.title}
-              className="surface-card group rounded-3xl p-7 transition-transform duration-300 hover:-translate-y-1"
+              className="surface-card group rounded-3xl p-7 transition-transform duration-300 hover:-translate-y-1 motion-reduce:hover:translate-y-0 motion-reduce:transition-none"
             >
               <span className="text-sm font-semibold text-primary">
                 {String(index + 1).padStart(2, "0")}

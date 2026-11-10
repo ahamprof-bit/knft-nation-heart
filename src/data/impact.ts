@@ -11,7 +11,27 @@ export type Stat = {
   value: number;
   suffix?: string;
   label: string;
+  /** What is being counted, e.g. "unique water bodies". */
+  unit?: string;
+  /** Plain-language definition shown on detailed Impact pages. */
+  definition?: string;
 };
+
+/** Date the public figures below were last reviewed. */
+export const IMPACT_LAST_UPDATED = "October 2026";
+
+/**
+ * Headline water-body figure — the ONLY place it is defined.
+ * Counts unique sites; a site with several activities counts once.
+ */
+export const waterBodiesHeadline = {
+  value: 50,
+  suffix: "+",
+  label: "Water Bodies",
+  unit: "unique water bodies",
+  definition:
+    "Unique water bodies (lakes, ponds, channels) where KNFT has carried out assessment, restoration or maintenance work. A site with several activities is counted once.",
+} as const;
 
 /* ============================================================
    IMPACT STORY TYPE
@@ -37,23 +57,33 @@ export type Story = {
 
 export const impactStats: Stat[] = [
   {
-    value: 13,
-    suffix: "+",
-    label: "Water Bodies Restored",
+    value: waterBodiesHeadline.value,
+    suffix: waterBodiesHeadline.suffix,
+    label: waterBodiesHeadline.label,
+    unit: waterBodiesHeadline.unit,
+    definition: waterBodiesHeadline.definition,
   },
   {
     value: 20000,
-    label: "Palm Seeds",
+    label: "Palm Seeds Sown",
+    unit: "seeds sown",
+    definition:
+      "Palm seeds sown. Seeds collected and seedlings established are reported separately.",
   },
   {
     value: 5000,
     suffix: "+",
     label: "Saplings Planted",
+    unit: "saplings planted",
+    definition:
+      "Saplings planted. This is not the number of surviving trees.",
   },
   {
     value: 800,
     suffix: "+",
     label: "Children Trained",
+    unit: "children",
+    definition: "Children who took part in KNFT training programmes.",
   },
 ];
 
@@ -63,9 +93,11 @@ export const impactStats: Stat[] = [
 
 export const environmentalImpact: Stat[] = [
   {
-    value: 13,
-    suffix: "+",
-    label: "Water Bodies Restored",
+    value: waterBodiesHeadline.value,
+    suffix: waterBodiesHeadline.suffix,
+    label: waterBodiesHeadline.label,
+    unit: waterBodiesHeadline.unit,
+    definition: waterBodiesHeadline.definition,
   },
   {
     value: 20000,
@@ -106,6 +138,9 @@ export const socialImpact: Stat[] = [
     value: 100,
     suffix: "+",
     label: "Blood Donors Mobilised",
+    unit: "donors mobilised",
+    definition:
+      "Donors mobilised for blood donation. Camps held and donations coordinated are reported separately.",
   },
   {
     value: 20,

@@ -91,6 +91,9 @@
   --natural: oklch(0.74 0.13 145);
   --offwhite: oklch(0.985 0.008 130);
   --charcoal: oklch(0.27 0.01 150);
+  /* Brand identity tokens: Deep Navy Blue and Sky Blue (alongside Emerald). */
+  --navy: oklch(0.27 0.07 255);
+  --sky: oklch(0.78 0.11 235);
 
   --gradient-hero: linear-gradient(135deg, oklch(0.28 0.06 155) 0%, oklch(0.42 0.1 158) 55%, oklch(0.55 0.12 150) 100%);
   --gradient-leaf: linear-gradient(120deg, var(--emerald), var(--natural));
@@ -167,8 +170,11 @@
   --color-charcoal: var(--charcoal);
   --shadow-soft: var(--shadow-soft);
   --shadow-lift: var(--shadow-lift);
-  --font-display: "Fraunces", ui-serif, Georgia, serif;
-  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --color-navy: var(--navy);
+  --color-sky: var(--sky);
+  /* Brand fonts. Noto Sans Tamil is the fallback that renders Tamil glyphs. */
+  --font-display: "Poppins", "Noto Sans Tamil", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", "Noto Sans Tamil", ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
@@ -182,6 +188,35 @@
   h1, h2, h3, .font-display {
     font-family: var(--font-display);
     letter-spacing: -0.015em;
+  }
+  /* Tight tracking breaks Tamil letter joins — keep it normal for Tamil. */
+  :lang(ta) {
+    letter-spacing: 0;
+  }
+  /* Prevent sideways scrolling from clipped or oversized content. */
+  body {
+    overflow-x: clip;
+  }
+  /* Visible keyboard focus everywhere. */
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+}
+
+/* Respect the "reduce motion" setting across the whole site. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

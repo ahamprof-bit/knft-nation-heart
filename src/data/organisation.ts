@@ -165,3 +165,28 @@ export const organisation = {
 
   strengthStatement: "OUR STRENGTH IS COLLECTIVE ACTION.",
 } as const;
+
+/*
+ * Legal & registration details.
+ *
+ * The 2012 volunteer-led origin and the Trust's formal registration are
+ * different things. Fill these ONLY from checked official documents.
+ * The About page shows this section only when at least one field is set.
+ */
+export type Registration = {
+  legalName: string;
+  registrationType: string;
+  registrationDate: string;
+  registrationNumber: string;
+  registeredOffice: string;
+  taxBenefitsNote: string;
+};
+
+export const registration: Registration = {
+  legalName: "",
+  registrationType: "",
+  registrationDate: "",
+  registrationNumber: "",
+  registeredOffice: "",
+  taxBenefitsNote: "",
+};

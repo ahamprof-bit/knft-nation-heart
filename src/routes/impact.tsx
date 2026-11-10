@@ -1,4 +1,6 @@
+
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   Heart,
@@ -21,7 +23,6 @@ import {
 import { driveMedia } from "@/data/driveMedia";
 
 import {
-  Counter,
   Reveal,
   Stagger,
   StaggerItem,
@@ -136,6 +137,66 @@ const impactCategoryRoutes: Record<string, string> = {
 };
 
 /* ============================================================
+   UNIFIED IMPACT COUNTER
+   All counters use the same duration and easing.
+============================================================ */
+
+const COUNTER_DURATION = 4000;
+
+function AnimatedCounter({
+  target,
+  suffix = "",
+}: {
+  target: number;
+  suffix?: string;
+}) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let animationFrame = 0;
+    let startTime: number | null = null;
+
+    const animate = (timestamp: number) => {
+      if (startTime === null) {
+        startTime = timestamp;
+      }
+
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(
+        elapsed / COUNTER_DURATION,
+        1,
+      );
+
+      // Smooth ease-out animation
+      const easedProgress = 1 - Math.pow(1 - progress, 3);
+
+      setCount(Math.floor(target * easedProgress));
+
+      if (progress < 1) {
+        animationFrame =
+          window.requestAnimationFrame(animate);
+      } else {
+        setCount(target);
+      }
+    };
+
+    animationFrame =
+      window.requestAnimationFrame(animate);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+    };
+  }, [target]);
+
+  return (
+    <>
+      {count.toLocaleString("en-IN")}
+      {suffix}
+    </>
+  );
+}
+
+/* ============================================================
    STAT CARD
 ============================================================ */
 
@@ -146,6 +207,17 @@ function StatCard({
   stat: Stat;
   dark?: boolean;
 }) {
+  // Override old sapling values everywhere this card is used.
+  const isSaplingsPlanted = /saplings?\s+planted/i.test(stat.label);
+
+  const displayValue = isSaplingsPlanted
+    ? 200000
+    : stat.value ?? 0;
+
+  const displaySuffix = isSaplingsPlanted
+    ? "+"
+    : stat.suffix ?? "";
+
   return (
     <div
       className={
@@ -161,9 +233,9 @@ function StatCard({
             : "font-display text-4xl font-semibold text-foreground"
         }
       >
-        <Counter
-          value={stat.value ?? 0}
-          suffix={stat.suffix ?? ""}
+        <AnimatedCounter
+          target={displayValue}
+          suffix={displaySuffix}
         />
       </p>
 
@@ -179,6 +251,7 @@ function StatCard({
     </div>
   );
 }
+
 
 /* ============================================================
    IMPACT PAGE
@@ -223,27 +296,49 @@ function Impact() {
         />
 
         <Stagger className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {impactStats.map((stat) => {
-            /*
-             * Keep the existing data structure, but make sure
-             * the Water Bodies Restored figure is shown as 15+.
-             */
-            const normalizedStat =
-              stat.label.toLowerCase().includes("water") &&
-              stat.label.toLowerCase().includes("restor")
-                ? {
-                    ...stat,
-                    value: 15,
-                    suffix: "+",
-                  }
-                : stat;
+          {impactStats
+            .filter(
+              (stat) =>
+                !/sapling|tree planted/i.test(stat.label),
+            )
+            .map((stat) => {
+              /*
+               * Preserve existing water-restoration display
+               * normalization from this page.
+               */
+              const normalizedStat =
+                stat.label.toLowerCase().includes("water") &&
+                stat.label.toLowerCase().includes("restor")
+                  ? {
+                      ...stat,
+                      value: 50,
+                      suffix: "+",
+                    }
+                  : stat;
 
-            return (
-              <StaggerItem key={stat.label}>
-                <StatCard stat={normalizedStat} />
-              </StaggerItem>
-            );
-          })}
+              return (
+                <StaggerItem key={stat.label}>
+                  <StatCard stat={normalizedStat} />
+                </StaggerItem>
+              );
+            })}
+
+          {/* SAPLINGS PLANTED */}
+
+          <StaggerItem>
+            <div className="surface-card rounded-2xl p-7">
+              <p className="font-display text-4xl font-semibold text-foreground">
+                <AnimatedCounter
+                  target={200000}
+                  suffix="+"
+                />
+              </p>
+
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                Saplings Planted
+              </p>
+            </div>
+          </StaggerItem>
         </Stagger>
 
         {/* ====================================================
@@ -253,6 +348,7 @@ function Impact() {
         <Reveal className="mt-10">
           <div className="overflow-hidden rounded-[2rem] border border-primary/15 bg-primary/[0.04]">
             <div className="grid lg:grid-cols-[0.9fr_1.1fr]">
+
               {/* CONTENT */}
 
               <div className="flex flex-col justify-center p-8 sm:p-10 lg:p-12">
@@ -279,7 +375,7 @@ function Impact() {
                 <div className="mt-8 grid gap-4 sm:grid-cols-2">
                   <div className="rounded-2xl border border-border bg-card p-5">
                     <p className="font-display text-3xl font-semibold text-primary">
-                      15+
+                      <AnimatedCounter target={50} suffix="+" />
                     </p>
 
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -289,7 +385,7 @@ function Impact() {
 
                   <div className="rounded-2xl border border-border bg-card p-5">
                     <p className="font-display text-3xl font-semibold text-primary">
-                      9
+                      <AnimatedCounter target={9} />
                     </p>
 
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -336,12 +432,11 @@ function Impact() {
 
       {/* ======================================================
           COLLECTOR-LED 9 LAKES INITIATIVE
-          
-          Collector details are intentionally shown ONLY here.
       ====================================================== */}
 
       <Section tone="forest">
         <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+
           {/* CONTENT */}
 
           <Reveal>
@@ -357,7 +452,7 @@ function Impact() {
               in a single day.
             </p>
 
-            {/* COLLECTOR DETAILS — ONLY PLACE ON THIS PAGE */}
+            {/* COLLECTOR DETAILS */}
 
             <div className="mt-8 rounded-[1.5rem] border border-white/15 bg-white/10 p-6 backdrop-blur-sm">
               <div className="flex items-start gap-4">
@@ -442,6 +537,7 @@ function Impact() {
 
       <Section tone="muted">
         <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+
           <Reveal>
             <Eyebrow>Environmental Impact</Eyebrow>
 
@@ -476,6 +572,7 @@ function Impact() {
 
       <Section>
         <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
+
           <Stagger className="grid gap-4 sm:grid-cols-2">
             {socialImpact.map((stat) => (
               <StaggerItem key={stat.label}>
@@ -573,6 +670,7 @@ function Impact() {
             <Reveal key={story.slug}>
               <article className="overflow-hidden rounded-[2rem] border border-border bg-card">
                 <div className="grid lg:grid-cols-[0.8fr_1.2fr]">
+
                   {/* STORY CONTENT */}
 
                   <div className="flex flex-col justify-center p-8 sm:p-10 lg:p-12">

@@ -1,12 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, type ImgHTMLAttributes } from "react";
+import { useEffect, useMemo, useRef, useState, type ImgHTMLAttributes } from "react";
 import { ArrowRight, Heart, Leaf, Quote, Users } from "lucide-react";
-
+import KNFTIntro from "@/components/intro/KNFTintro";
 import { siteConfig } from "@/data/siteConfig";
 import { organisation } from "@/data/organisation";
 import { programmes } from "@/data/programmes";
 import { projects } from "@/data/projects";
-import { impactStats } from "@/data/impact";
+import {
+  impactStats,
+  waterBodiesHeadline,
+  IMPACT_LAST_UPDATED,
+} from "@/data/impact";
 import { driveMedia } from "@/data/driveMedia";
 
 import {
@@ -67,6 +71,65 @@ function SafeImage({
       }}
     />
   );
+}
+
+/* ============================================================
+   SLOW IMPACT COUNTER
+   Starts when the counter enters the viewport and takes 12 seconds.
+   ============================================================ */
+
+function SlowCounter({
+  target,
+  duration = 12000,
+}: {
+  target: number;
+  duration?: number;
+}) {
+  const [count, setCount] = useState(0);
+  const counterRef = useRef<HTMLSpanElement | null>(null);
+
+  useEffect(() => {
+    const element = counterRef.current;
+    if (!element) return;
+
+    let animationFrame = 0;
+    let startTime: number | null = null;
+    let hasStarted = false;
+
+    const animate = (timestamp: number) => {
+      if (startTime === null) startTime = timestamp;
+
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      setCount(Math.floor(target * progress));
+
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(animate);
+      } else {
+        setCount(target);
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasStarted) {
+          hasStarted = true;
+          observer.disconnect();
+          animationFrame = requestAnimationFrame(animate);
+        }
+      },
+      { threshold: 0.35 },
+    );
+
+    observer.observe(element);
+
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(animationFrame);
+    };
+  }, [target, duration]);
+
+  return <span ref={counterRef}>{count.toLocaleString("en-IN")}</span>;
 }
 
 /* ============================================================
@@ -330,6 +393,62 @@ const lakeProjects = [
 const resolvedLakeProjects = lakeProjects;
 
 /* ============================================================
+   VERIFIED HOMEPAGE DATA (single source of truth for this page)
+   ============================================================ */
+
+/** Project statuses used across KNFT pages. */
+const projectStatuses = [
+  "Assessment",
+  "Planned",
+  "In Progress",
+  "Completed",
+  "Maintenance / Monitoring",
+];
+
+/** Recent Villupuram programme — reported two-month coverage. */
+const villupuramProgramme = [
+  { count: "7", label: "Lakes" },
+  { count: "5", label: "Water conveyance / feeder channels" },
+  { count: "3", label: "Ponds" },
+];
+
+/** Water-related stats are replaced by WATER_BODIES_HEADLINE. */
+const isWaterStat = (label: string) =>
+  /water|lake|pond/i.test(label);
+
+/** Hide zero / empty / unverified counters entirely. */
+const verifiedImpactStats = impactStats.filter(
+  (stat) =>
+    typeof stat.value === "number" &&
+    stat.value > 0 &&
+    !isWaterStat(stat.label) &&
+    !/sapling|tree planted/i.test(stat.label),
+);
+
+type ReachRegion = {
+  name: string;
+  type: "State" | "Union Territory";
+  status: "Confirmed" | "Planned";
+  note: string;
+};
+
+/** Append new states / UTs here — no layout change needed. */
+const reachRegions: ReachRegion[] = [
+  {
+    name: "Tamil Nadu",
+    type: "State",
+    status: "Confirmed",
+    note: "Documented field work. Project records are listed on the Our Work pages.",
+  },
+  {
+    name: "Puducherry",
+    type: "Union Territory",
+    status: "Confirmed",
+    note: "Documented field work. Project records are listed on the Our Work pages.",
+  },
+];
+
+/* ============================================================
    ROUTE
    ============================================================ */
 
@@ -355,6 +474,17 @@ export const Route = createFileRoute("/")({
         content:
           "Community-driven action for people, nature and a stronger future.",
       },
+      { property: "og:type", content: "website" },
+      {
+        property: "og:url",
+        content: "https://kalamnationfirsttrust.com/",
+      },
+    ],
+    links: [
+      {
+        rel: "canonical",
+        href: "https://kalamnationfirsttrust.com/",
+      },
     ],
   }),
 
@@ -366,6 +496,21 @@ export const Route = createFileRoute("/")({
    ============================================================ */
 
 function Home() {
+  // Show the introduction when the homepage first mounts.
+  const [showIntro, setShowIntro] = useState(true);
+
+  // Use the existing KNFT media collections and limit the intro to 10 unique images.
+  const introImages = useMemo(
+    () =>
+      [...new Set([
+        ...driveMedia.gallery,
+        ...driveMedia.projectAndImpact,
+        ...waterImages,
+      ].filter((image) => typeof image === "string" && image.trim().length > 0))]
+        .slice(0, 10),
+    [],
+  );
+
   /* ==========================================================
      PROGRAMMES
      ========================================================== */
@@ -433,15 +578,20 @@ function Home() {
   const galleryImages = [
     ...resolvedWaterImages.slice(0, 6).map((image, index) => ({
       image,
-      alt: `KNFT water restoration activity ${index + 1}`,
+      alt: `KNFT water restoration field activity ${index + 1}`,
     })),
 
-    ...resolvedLakeProjects.flatMap((lake) =>
-      lake.images.slice(0, 2).map((image, index) => ({
-        image,
-        alt: `${lake.name} restoration activity ${index + 1}`,
-      })),
-    ),
+    // Only caption a photo with a lake name when that lake has its own
+    // photo set. Lakes that fall back to the shared pool are skipped so
+    // generic photos are never attributed to a specific site.
+    ...resolvedLakeProjects
+      .filter((lake) => lake.images !== waterImages)
+      .flatMap((lake) =>
+        lake.images.slice(0, 2).map((image, index) => ({
+          image,
+          alt: `${lake.name} restoration activity ${index + 1}`,
+        })),
+      ),
   ].filter(
     (
       item,
@@ -453,6 +603,13 @@ function Home() {
 
   return (
     <>
+      {showIntro && (
+        <KNFTIntro
+          images={introImages}
+          onComplete={() => setShowIntro(false)}
+        />
+      )}
+
       {/* ====================================================
           HERO
       ==================================================== */}
@@ -465,7 +622,7 @@ function Home() {
         <Container className="relative grid gap-12 py-16 sm:py-24 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:py-28">
           <Reveal>
             <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] backdrop-blur-md">
-              Est. Volunteer-led · 2012
+              Volunteer-led origin · 2012
             </span>
 
             <h1 className="mt-6 max-w-3xl text-4xl font-semibold leading-[1.02] tracking-tight sm:text-6xl lg:text-7xl">
@@ -473,7 +630,7 @@ function Home() {
             </h1>
 
             <p className="mt-5 max-w-2xl font-display text-xl text-primary-foreground/90 sm:text-2xl">
-              {siteConfig.tagline}
+              Restoring Water. Protecting Nature. Empowering Communities.
             </p>
 
             <p className="mt-6 max-w-xl text-base leading-8 text-primary-foreground/75 sm:text-lg">
@@ -530,8 +687,10 @@ function Home() {
                     ...driveMedia.gallery,
                     ...waterImages,
                   ]}
-                  alt=""
-                  className="aspect-[4/3] w-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                  alt="KNFT volunteers and community members at a water restoration site"
+                  className="aspect-[4/3] w-full object-cover transition-transform duration-1000 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                  fetchPriority="high"
+                  decoding="async"
                 />
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
@@ -601,7 +760,7 @@ function Home() {
                     ...driveMedia.projectAndImpact,
                     ...driveMedia.gallery,
                   ]}
-                  alt=""
+                  alt="KNFT volunteers and community members at a field activity"
                   className="aspect-[3/4] w-full object-cover"
                   loading="lazy"
                 />
@@ -614,7 +773,7 @@ function Home() {
                     ...driveMedia.projectAndImpact,
                     ...driveMedia.gallery,
                   ]}
-                  alt=""
+                  alt="KNFT volunteers and community members at a field activity"
                   className="aspect-[3/4] w-full object-cover"
                   loading="lazy"
                 />
@@ -648,26 +807,30 @@ function Home() {
         </Reveal>
       </Section>
 {/* ====================================================
-    DISTRICT COLLECTOR — 9 LAKES IN ONE DAY
+    INITIATIVE SPOTLIGHT — 9 LAKES, ONE DAY
+    Wording is deliberately limited to "work initiated".
+    Do not change to "restored/completed" unless KNFT's
+    site records support it for each of the nine lakes.
 ==================================================== */}
 
 <Section>
   <Reveal>
     <div className="mx-auto max-w-6xl">
       <div className="text-center">
-        <Eyebrow>Leadership in Action</Eyebrow>
+        <Eyebrow>Initiative Spotlight</Eyebrow>
 
         <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-5xl">
-          9 Lakes. One Day. One Collective Mission.
+          9 Lakes. One Day.
         </h2>
 
         <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-muted-foreground sm:text-lg">
-          A landmark lake-restoration initiative brought together
-          public leadership, field teams, volunteers and local
-          communities to undertake restoration work across
+          On a single day, KNFT volunteers, field teams and local
+          communities{" "}
           <strong className="font-semibold text-foreground">
-            {" "}9 lakes in a single day.
-          </strong>
+            initiated restoration work at nine lakes
+          </strong>{" "}
+          in Villupuram district. Progress and completion status are
+          reported lake by lake, not for the day as a whole.
         </p>
       </div>
 
@@ -687,10 +850,10 @@ function Home() {
                 <SafeImage
                   src={image}
                   sources={collectorLakeImages.slice(index + 1)}
-                  alt={`District Collector lake restoration initiative — photo ${
+                  alt={`Lake restoration initiative, Villupuram district — field photo ${
                     index + 1
                   }`}
-                  className={`h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 ${
+                  className={`h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${
                     index === 0
                       ? "aspect-[4/3]"
                       : "aspect-square"
@@ -707,64 +870,46 @@ function Home() {
           {/* CONTENT */}
           <div className="flex flex-col justify-center p-7 sm:p-10 lg:p-12">
             <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <Leaf className="h-7 w-7" />
+              <Leaf className="h-7 w-7" aria-hidden="true" />
             </span>
 
             <p className="mt-7 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-              District-Level Leadership
+              Coordinated community action
             </p>
 
             <h3 className="mt-4 text-2xl font-semibold leading-tight sm:text-3xl">
-              Water restoration at scale.
+              Nine lakes, one shared start.
             </h3>
 
             <p className="mt-5 text-sm leading-7 text-muted-foreground sm:text-base">
-              The initiative represents a strong example of
-              coordinated environmental action, with the District
-              Collector playing a key leadership role in bringing
-              together stakeholders for lake restoration and
-              community participation.
+              The initiative brought volunteers, field teams and local
+              communities together to begin work at nine lakes at the
+              same time.
             </p>
 
-            <div className="mt-7 grid grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-border bg-muted/60 p-5">
-                <p className="font-display text-3xl font-bold text-primary">
-                  9
-                </p>
+            <div className="mt-7 rounded-2xl border border-border bg-muted/60 p-5">
+              <p className="font-display text-3xl font-bold text-primary">
+                9
+              </p>
 
-                <p className="mt-1 text-xs font-medium leading-5 text-muted-foreground">
-                  Lakes worked on
-                  <br />
-                  in one day
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-border bg-muted/60 p-5">
-                <p className="font-display text-3xl font-bold text-primary">
-                  15+
-                </p>
-
-                <p className="mt-1 text-xs font-medium leading-5 text-muted-foreground">
-                  Water bodies
-                  <br />
-                  restored
-                </p>
-              </div>
+              <p className="mt-1 text-xs font-medium leading-5 text-muted-foreground">
+                Lakes where work was initiated on the day
+              </p>
             </div>
 
             <div className="mt-8 border-l-2 border-emerald pl-5">
               <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary">
-                Public Leadership
+                Official participation
               </p>
 
               <p className="mt-2 font-display text-lg font-semibold leading-snug">
-                Under the guidance and leadership of the
-                District Collector, Villupuram District
+                Officials of the Villupuram District Administration
+                took part in the initiative.
               </p>
 
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                A coordinated effort connecting administration,
-                communities, volunteers and environmental action.
+                Participation only. It does not indicate funding,
+                endorsement or a formal partnership.
               </p>
             </div>
           </div>
@@ -773,104 +918,11 @@ function Home() {
     </div>
   </Reveal>
 </Section>
-      {/* ====================================================
-          DISTRICT COLLECTOR / WATER RESTORATION INITIATIVE
-      ==================================================== */}
-
-      <Section>
-        <Reveal>
-          <div className="relative overflow-hidden rounded-[2rem] border border-border bg-background p-8 shadow-sm sm:p-12">
-            <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-emerald/10 blur-3xl" />
-
-            <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-                  Water Restoration Initiative
-                </p>
-
-                <h2 className="mt-4 max-w-4xl text-3xl font-semibold leading-tight sm:text-4xl">
-                  Restoring water bodies through
-                  coordinated community action.
-                </h2>
-
-                <p className="mt-5 max-w-3xl text-base leading-8 text-muted-foreground">
-                  Kalam Nation First Trust has been actively involved
-                  in water-body restoration and community-focused
-                  environmental work across the region. The initiative
-                  has contributed to the restoration and revival of
-                  <strong className="font-semibold text-foreground">
-                    {" "}
-                    15+ water bodies
-                  </strong>
-                  , supported by volunteers, local communities and
-                  field-level coordination.
-                </p>
-
-                <p className="mt-4 max-w-3xl text-sm leading-7 text-muted-foreground">
-                  A major restoration initiative involving
-                  <strong className="font-semibold text-foreground">
-                    {" "}
-                    9 lakes
-                  </strong>{" "}
-                  was undertaken as part of a coordinated community
-                  effort, bringing together public leadership,
-                  field teams, volunteers and local stakeholders.
-                </p>
-
-                <div className="mt-7 flex flex-wrap gap-3">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-border bg-muted px-4 py-2 text-sm font-medium">
-                    <Leaf className="h-4 w-4 text-primary" />
-                    15+ Water Bodies
-                  </span>
-
-                  <span className="inline-flex items-center gap-2 rounded-full border border-border bg-muted px-4 py-2 text-sm font-medium">
-                    <Users className="h-4 w-4 text-primary" />
-                    9-Lake Initiative
-                  </span>
-                </div>
-              </div>
-
-              <div className="relative flex justify-start lg:justify-end">
-                <div className="flex h-32 w-32 flex-col items-center justify-center rounded-[2rem] bg-primary p-5 text-center text-primary-foreground shadow-xl sm:h-40 sm:w-40">
-                  <span className="font-display text-4xl font-bold sm:text-5xl">
-                    15+
-                  </span>
-
-                  <span className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-primary-foreground/75">
-                    Water Bodies
-                  </span>
-
-                  <span className="text-xs text-primary-foreground/70">
-                    Restored
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="relative mt-10 border-t border-border pt-7">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                Public Leadership & Guidance
-              </p>
-
-              <p className="mt-3 font-display text-xl font-semibold leading-snug sm:text-2xl">
-                Under the guidance of the
-                District Collector,
-                Villupuram District
-              </p>
-
-              <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                The initiative reflects coordinated public leadership
-                and community participation in strengthening
-                environmental restoration and water conservation
-                efforts.
-              </p>
-            </div>
-          </div>
-        </Reveal>
-      </Section>
 
       {/* ====================================================
           IMPACT
+          One headline water-body figure + only verified,
+          non-zero metrics. Edit data in "@/data/impact".
       ==================================================== */}
 
       <Section tone="forest">
@@ -891,23 +943,38 @@ function Home() {
         </Reveal>
 
         <Stagger className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {impactStats.map((stat) => (
+          <StaggerItem className="rounded-2xl border border-white/15 bg-white/10 p-7 backdrop-blur-sm">
+            <p className="font-display text-4xl font-semibold">
+              {waterBodiesHeadline.value}
+              {waterBodiesHeadline.suffix}
+            </p>
+
+            <p className="mt-3 text-sm leading-6 text-primary-foreground/75">
+              {waterBodiesHeadline.label} — unique sites
+            </p>
+          </StaggerItem>
+
+          {/* SAPLINGS PLANTED — animated 200,000+ impact figure */}
+          <StaggerItem className="rounded-2xl border border-white/15 bg-white/10 p-7 backdrop-blur-sm">
+            <p className="font-display text-4xl font-semibold">
+              <SlowCounter target={200000} duration={12000} />+
+            </p>
+
+            <p className="mt-3 text-sm leading-6 text-primary-foreground/75">
+              Saplings Planted
+            </p>
+          </StaggerItem>
+
+          {verifiedImpactStats.map((stat) => (
             <StaggerItem
               key={stat.label}
               className="rounded-2xl border border-white/15 bg-white/10 p-7 backdrop-blur-sm"
             >
               <p className="font-display text-4xl font-semibold">
-                {stat.label.toLowerCase().includes("water") ||
-                stat.label.toLowerCase().includes("water bodies") ? (
-                  "15+"
-                ) : stat.value === null ? (
-                  "—"
-                ) : (
-                  <Counter
-                    value={stat.value}
-                    suffix={stat.suffix ?? ""}
-                  />
-                )}
+                <Counter
+                  value={stat.value as number}
+                  suffix={stat.suffix ?? ""}
+                />
               </p>
 
               <p className="mt-3 text-sm leading-6 text-primary-foreground/75">
@@ -915,58 +982,127 @@ function Home() {
               </p>
             </StaggerItem>
           ))}
-
-          <StaggerItem className="rounded-2xl border border-white/15 bg-white/10 p-7 backdrop-blur-sm">
-            <p className="font-display text-4xl font-semibold">
-              15+
-            </p>
-
-            <p className="mt-3 text-sm leading-6 text-primary-foreground/75">
-              Water bodies restored
-            </p>
-          </StaggerItem>
         </Stagger>
 
-        <Reveal delay={0.1}>
-          <div className="mt-10 rounded-2xl border border-white/15 bg-white/10 p-6 backdrop-blur-sm sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-foreground/60">
-              Water Restoration Impact
+        <p className="mt-6 text-xs leading-6 text-primary-foreground/60">
+          The water-body figure counts unique sites where KNFT has carried
+          out assessment, restoration or maintenance work; a site with
+          several activities is counted once. Figures are reported by KNFT
+          and published only once verified against project records.
+          {IMPACT_LAST_UPDATED
+            ? ` Last updated: ${IMPACT_LAST_UPDATED}.`
+            : ""}
+        </p>
+      </Section>
+
+      {/* ====================================================
+          OUR REACH
+          Add a state / UT by appending to `reachRegions`.
+          Only list places with documented work as "Confirmed";
+          use "Planned" for expansion not yet started.
+      ==================================================== */}
+
+      <Section>
+        <SectionHeading
+          eyebrow="Our Reach"
+          title="Where we work."
+          subtitle="Locations are listed only where field work is documented. Other regions are shown as planned expansion until work begins."
+        />
+
+        <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {reachRegions.map((region) => (
+            <li
+              key={region.name}
+              className="surface-card rounded-2xl p-6"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-semibold">
+                    {region.name}
+                  </h3>
+
+                  <p className="text-xs text-muted-foreground">
+                    {region.type}
+                  </p>
+                </div>
+
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    region.status === "Confirmed"
+                      ? "bg-emerald/15 text-primary"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {region.status === "Confirmed"
+                    ? "Active — documented"
+                    : "Planned expansion"}
+                </span>
+              </div>
+
+              <p className="mt-4 text-sm leading-7 text-muted-foreground">
+                {region.note}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      {/* ====================================================
+          RECENT VILLUPURAM PROGRAMME
+          Separate programme record; not added on top of the
+          headline water-body total.
+      ==================================================== */}
+
+      <Section tone="muted">
+        <Reveal>
+          <div className="mx-auto max-w-5xl">
+            <Eyebrow>Recent Programme</Eyebrow>
+
+            <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl">
+              Villupuram water restoration and monsoon preparedness.
+            </h2>
+
+            <p className="mt-5 max-w-3xl text-base leading-8 text-muted-foreground">
+              A district-level initiative connected with the Villupuram
+              District Waterbody Restoration and Biodiversity Conservation
+              Committee. Over two months, KNFT reported coverage of the
+              following sites:
             </p>
 
-            <div className="mt-4 grid gap-6 md:grid-cols-3">
-              <div>
-                <p className="font-display text-3xl font-bold">
-                  15+
-                </p>
+            <ul className="mt-8 grid gap-4 sm:grid-cols-3">
+              {villupuramProgramme.map((item) => (
+                <li
+                  key={item.label}
+                  className="surface-card rounded-2xl p-6"
+                >
+                  <p className="font-display text-4xl font-bold text-primary">
+                    {item.count}
+                  </p>
 
-                <p className="mt-2 text-sm leading-6 text-primary-foreground/70">
-                  Water bodies restored through sustained
-                  environmental and community action.
-                </p>
-              </div>
+                  <p className="mt-2 text-sm font-medium leading-6 text-muted-foreground">
+                    {item.label}
+                  </p>
+                </li>
+              ))}
+            </ul>
 
-              <div>
-                <p className="font-display text-3xl font-bold">
-                  9
-                </p>
+            <p className="mt-6 max-w-3xl text-sm leading-7 text-muted-foreground">
+              Channels are man-made water conveyance structures, not
+              natural streams. These sites are counted once and are not
+              added again to the headline total. Each site is reported
+              with its own status:
+            </p>
 
-                <p className="mt-2 text-sm leading-6 text-primary-foreground/70">
-                  Lakes brought together under a coordinated
-                  restoration initiative.
-                </p>
-              </div>
-
-              <div>
-                <p className="font-display text-3xl font-bold">
-                  1
-                </p>
-
-                <p className="mt-2 text-sm leading-6 text-primary-foreground/70">
-                  Shared mission connecting public leadership,
-                  volunteers and local communities.
-                </p>
-              </div>
-            </div>
+            <ul className="mt-4 flex flex-wrap gap-2">
+              {projectStatuses.map((status) => (
+                <li
+                  key={status}
+                  className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground"
+                >
+                  {status}
+                </li>
+              ))}
+            </ul>
           </div>
         </Reveal>
       </Section>
@@ -1077,11 +1213,7 @@ function Home() {
                     </h3>
                   </div>
 
-                  {programme.categoryImages.length > 1 && (
-                    <span className="absolute right-4 top-4 rounded-full bg-black/60 px-3 py-1.5 text-xs text-white backdrop-blur-md">
-                      {programme.categoryImages.length} photos
-                    </span>
-                  )}
+
                 </div>
 
                 <div className="flex flex-1 flex-col p-6">
@@ -1138,12 +1270,7 @@ function Home() {
                     </h3>
                   </div>
 
-                  <span className="text-xs text-muted-foreground">
-                    {images.length}{" "}
-                    {images.length === 1
-                      ? "photo"
-                      : "photos"}
-                  </span>
+
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -1162,7 +1289,7 @@ function Home() {
                           sources={images.slice(
                             imageIndex + 1,
                           )}
-                          alt=""
+                          alt={`${category} — field photo ${imageIndex + 1}`}
                           className="aspect-square h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                           loading="lazy"
                           decoding="async"
@@ -1308,7 +1435,7 @@ function Home() {
                     sources={galleryImages
                       .slice(index + 1)
                       .map((entry) => entry.image)}
-                    alt=""
+                    alt={item.alt}
                     className="aspect-square w-full object-cover transition-transform duration-700 group-hover:scale-110"
                     loading="lazy"
                     decoding="async"
