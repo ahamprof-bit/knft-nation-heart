@@ -1,7 +1,8 @@
+
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState, type ImgHTMLAttributes } from "react";
+import { useEffect, useRef, useState, type ImgHTMLAttributes } from "react";
 import { ArrowRight, Heart, Leaf, Quote, Users } from "lucide-react";
-import KNFTIntro from "@/components/intro/KNFTintro";
+import KNFTIntro from "@/components/intro/KNFTIntro";
 import { siteConfig } from "@/data/siteConfig";
 import { organisation } from "@/data/organisation";
 import { programmes } from "@/data/programmes";
@@ -75,7 +76,6 @@ function SafeImage({
 
 /* ============================================================
    SLOW IMPACT COUNTER
-   Starts when the counter enters the viewport and takes 12 seconds.
    ============================================================ */
 
 function SlowCounter({
@@ -101,6 +101,7 @@ function SlowCounter({
 
       const elapsed = timestamp - startTime;
       const progress = Math.min(elapsed / duration, 1);
+
       setCount(Math.floor(target * progress));
 
       if (progress < 1) {
@@ -306,6 +307,7 @@ function getProjectImages(project: {
 
 const heroDriveImage =
   "https://drive.google.com/thumbnail?id=1IJW-5hpOnUtJ4mxn9NAKzvHpgZt0cSq_&sz=w2000";
+
 const collectorLakeImages = [
   "https://drive.google.com/thumbnail?id=1gepyGtSwoQZdHgky4_wSKYZmJdE-DYgv&sz=w1600",
   "https://drive.google.com/thumbnail?id=15mVnPPFQUOaimeHxiKTLjDAwSLMZM7Gw&sz=w1600",
@@ -313,6 +315,7 @@ const collectorLakeImages = [
   "https://drive.google.com/thumbnail?id=1BdgKv85rIOfvFVaMyu8T9iiDLltIQUCb&sz=w1600",
   "https://drive.google.com/thumbnail?id=1sH_wh0zZXPGm1-xOrbEYvLGh_5YLIZhe&sz=w1600",
 ];
+
 const heroImage = heroDriveImage;
 
 const aboutImage1 =
@@ -393,10 +396,9 @@ const lakeProjects = [
 const resolvedLakeProjects = lakeProjects;
 
 /* ============================================================
-   VERIFIED HOMEPAGE DATA (single source of truth for this page)
+   VERIFIED HOMEPAGE DATA
    ============================================================ */
 
-/** Project statuses used across KNFT pages. */
 const projectStatuses = [
   "Assessment",
   "Planned",
@@ -405,18 +407,15 @@ const projectStatuses = [
   "Maintenance / Monitoring",
 ];
 
-/** Recent Villupuram programme — reported two-month coverage. */
 const villupuramProgramme = [
   { count: "7", label: "Lakes" },
   { count: "5", label: "Water conveyance / feeder channels" },
   { count: "3", label: "Ponds" },
 ];
 
-/** Water-related stats are replaced by WATER_BODIES_HEADLINE. */
 const isWaterStat = (label: string) =>
   /water|lake|pond/i.test(label);
 
-/** Hide zero / empty / unverified counters entirely. */
 const verifiedImpactStats = impactStats.filter(
   (stat) =>
     typeof stat.value === "number" &&
@@ -432,7 +431,6 @@ type ReachRegion = {
   note: string;
 };
 
-/** Append new states / UTs here — no layout change needed. */
 const reachRegions: ReachRegion[] = [
   {
     name: "Tamil Nadu",
@@ -496,20 +494,7 @@ export const Route = createFileRoute("/")({
    ============================================================ */
 
 function Home() {
-  // Show the introduction when the homepage first mounts.
   const [showIntro, setShowIntro] = useState(true);
-
-  // Use the existing KNFT media collections and limit the intro to 10 unique images.
-  const introImages = useMemo(
-    () =>
-      [...new Set([
-        ...driveMedia.gallery,
-        ...driveMedia.projectAndImpact,
-        ...waterImages,
-      ].filter((image) => typeof image === "string" && image.trim().length > 0))]
-        .slice(0, 10),
-    [],
-  );
 
   /* ==========================================================
      PROGRAMMES
@@ -581,9 +566,6 @@ function Home() {
       alt: `KNFT water restoration field activity ${index + 1}`,
     })),
 
-    // Only caption a photo with a lake name when that lake has its own
-    // photo set. Lakes that fall back to the shared pool are skipped so
-    // generic photos are never attributed to a specific site.
     ...resolvedLakeProjects
       .filter((lake) => lake.images !== waterImages)
       .flatMap((lake) =>
@@ -603,11 +585,9 @@ function Home() {
 
   return (
     <>
+      {/* INTRO — videos are managed inside KNFTIntro.tsx */}
       {showIntro && (
-        <KNFTIntro
-          images={introImages}
-          onComplete={() => setShowIntro(false)}
-        />
+        <KNFTIntro onComplete={() => setShowIntro(false)} />
       )}
 
       {/* ====================================================
@@ -806,123 +786,117 @@ function Home() {
           </div>
         </Reveal>
       </Section>
-{/* ====================================================
-    INITIATIVE SPOTLIGHT — 9 LAKES, ONE DAY
-    Wording is deliberately limited to "work initiated".
-    Do not change to "restored/completed" unless KNFT's
-    site records support it for each of the nine lakes.
-==================================================== */}
 
-<Section>
-  <Reveal>
-    <div className="mx-auto max-w-6xl">
-      <div className="text-center">
-        <Eyebrow>Initiative Spotlight</Eyebrow>
+      {/* ====================================================
+          INITIATIVE SPOTLIGHT — 9 LAKES, ONE DAY
+      ==================================================== */}
 
-        <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-5xl">
-          9 Lakes. One Day.
-        </h2>
+      <Section>
+        <Reveal>
+          <div className="mx-auto max-w-6xl">
+            <div className="text-center">
+              <Eyebrow>Initiative Spotlight</Eyebrow>
 
-        <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-muted-foreground sm:text-lg">
-          On a single day, KNFT volunteers, field teams and local
-          communities{" "}
-          <strong className="font-semibold text-foreground">
-            initiated restoration work at nine lakes
-          </strong>{" "}
-          in Villupuram district. Progress and completion status are
-          reported lake by lake, not for the day as a whole.
-        </p>
-      </div>
+              <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-5xl">
+                9 Lakes. One Day.
+              </h2>
 
-      <div className="mt-10 overflow-hidden rounded-[2rem] border border-border bg-background shadow-sm">
-        <div className="grid gap-0 lg:grid-cols-[1fr_0.85fr]">
-          {/* IMAGE COLLAGE */}
-          <div className="grid grid-cols-2 gap-2 bg-muted p-2 sm:grid-cols-3">
-            {collectorLakeImages.map((image, index) => (
-              <div
-                key={image}
-                className={`group relative overflow-hidden rounded-xl ${
-                  index === 0
-                    ? "col-span-2 row-span-2 sm:col-span-2"
-                    : ""
-                }`}
-              >
-                <SafeImage
-                  src={image}
-                  sources={collectorLakeImages.slice(index + 1)}
-                  alt={`Lake restoration initiative, Villupuram district — field photo ${
-                    index + 1
-                  }`}
-                  className={`h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${
-                    index === 0
-                      ? "aspect-[4/3]"
-                      : "aspect-square"
-                  }`}
-                  loading="lazy"
-                  decoding="async"
-                />
+              <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-muted-foreground sm:text-lg">
+                On a single day, KNFT volunteers, field teams and local
+                communities{" "}
+                <strong className="font-semibold text-foreground">
+                  initiated restoration work at nine lakes
+                </strong>{" "}
+                in Villupuram district. Progress and completion status are
+                reported lake by lake, not for the day as a whole.
+              </p>
+            </div>
 
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+            <div className="mt-10 overflow-hidden rounded-[2rem] border border-border bg-background shadow-sm">
+              <div className="grid gap-0 lg:grid-cols-[1fr_0.85fr]">
+                <div className="grid grid-cols-2 gap-2 bg-muted p-2 sm:grid-cols-3">
+                  {collectorLakeImages.map((image, index) => (
+                    <div
+                      key={image}
+                      className={`group relative overflow-hidden rounded-xl ${
+                        index === 0
+                          ? "col-span-2 row-span-2 sm:col-span-2"
+                          : ""
+                      }`}
+                    >
+                      <SafeImage
+                        src={image}
+                        sources={collectorLakeImages.slice(index + 1)}
+                        alt={`Lake restoration initiative, Villupuram district — field photo ${
+                          index + 1
+                        }`}
+                        className={`h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${
+                          index === 0
+                            ? "aspect-[4/3]"
+                            : "aspect-square"
+                        }`}
+                        loading="lazy"
+                        decoding="async"
+                      />
+
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex flex-col justify-center p-7 sm:p-10 lg:p-12">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                    <Leaf className="h-7 w-7" aria-hidden="true" />
+                  </span>
+
+                  <p className="mt-7 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                    Coordinated community action
+                  </p>
+
+                  <h3 className="mt-4 text-2xl font-semibold leading-tight sm:text-3xl">
+                    Nine lakes, one shared start.
+                  </h3>
+
+                  <p className="mt-5 text-sm leading-7 text-muted-foreground sm:text-base">
+                    The initiative brought volunteers, field teams and local
+                    communities together to begin work at nine lakes at the
+                    same time.
+                  </p>
+
+                  <div className="mt-7 rounded-2xl border border-border bg-muted/60 p-5">
+                    <p className="font-display text-3xl font-bold text-primary">
+                      9
+                    </p>
+
+                    <p className="mt-1 text-xs font-medium leading-5 text-muted-foreground">
+                      Lakes where work was initiated on the day
+                    </p>
+                  </div>
+
+                  <div className="mt-8 border-l-2 border-emerald pl-5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary">
+                      Official participation
+                    </p>
+
+                    <p className="mt-2 font-display text-lg font-semibold leading-snug">
+                      Officials of the Villupuram District Administration
+                      took part in the initiative.
+                    </p>
+
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      Participation only. It does not indicate funding,
+                      endorsement or a formal partnership.
+                    </p>
+                  </div>
+                </div>
               </div>
-            ))}
-          </div>
-
-          {/* CONTENT */}
-          <div className="flex flex-col justify-center p-7 sm:p-10 lg:p-12">
-            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <Leaf className="h-7 w-7" aria-hidden="true" />
-            </span>
-
-            <p className="mt-7 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-              Coordinated community action
-            </p>
-
-            <h3 className="mt-4 text-2xl font-semibold leading-tight sm:text-3xl">
-              Nine lakes, one shared start.
-            </h3>
-
-            <p className="mt-5 text-sm leading-7 text-muted-foreground sm:text-base">
-              The initiative brought volunteers, field teams and local
-              communities together to begin work at nine lakes at the
-              same time.
-            </p>
-
-            <div className="mt-7 rounded-2xl border border-border bg-muted/60 p-5">
-              <p className="font-display text-3xl font-bold text-primary">
-                9
-              </p>
-
-              <p className="mt-1 text-xs font-medium leading-5 text-muted-foreground">
-                Lakes where work was initiated on the day
-              </p>
-            </div>
-
-            <div className="mt-8 border-l-2 border-emerald pl-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary">
-                Official participation
-              </p>
-
-              <p className="mt-2 font-display text-lg font-semibold leading-snug">
-                Officials of the Villupuram District Administration
-                took part in the initiative.
-              </p>
-
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Participation only. It does not indicate funding,
-                endorsement or a formal partnership.
-              </p>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-  </Reveal>
-</Section>
+        </Reveal>
+      </Section>
 
       {/* ====================================================
           IMPACT
-          One headline water-body figure + only verified,
-          non-zero metrics. Edit data in "@/data/impact".
       ==================================================== */}
 
       <Section tone="forest">
@@ -954,7 +928,6 @@ function Home() {
             </p>
           </StaggerItem>
 
-          {/* SAPLINGS PLANTED — animated 200,000+ impact figure */}
           <StaggerItem className="rounded-2xl border border-white/15 bg-white/10 p-7 backdrop-blur-sm">
             <p className="font-display text-4xl font-semibold">
               <SlowCounter target={200000} duration={12000} />+
@@ -997,9 +970,6 @@ function Home() {
 
       {/* ====================================================
           OUR REACH
-          Add a state / UT by appending to `reachRegions`.
-          Only list places with documented work as "Confirmed";
-          use "Planned" for expansion not yet started.
       ==================================================== */}
 
       <Section>
@@ -1049,8 +1019,6 @@ function Home() {
 
       {/* ====================================================
           RECENT VILLUPURAM PROGRAMME
-          Separate programme record; not added on top of the
-          headline water-body total.
       ==================================================== */}
 
       <Section tone="muted">
@@ -1212,8 +1180,6 @@ function Home() {
                       {programme.title}
                     </h3>
                   </div>
-
-
                 </div>
 
                 <div className="flex flex-1 flex-col p-6">
@@ -1259,18 +1225,13 @@ function Home() {
                 <div className="mb-6 flex items-end justify-between gap-4">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-                      {String(categoryIndex + 1).padStart(
-                        2,
-                        "0",
-                      )}
+                      {String(categoryIndex + 1).padStart(2, "0")}
                     </p>
 
                     <h3 className="mt-2 text-2xl font-semibold">
                       {category}
                     </h3>
                   </div>
-
-
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -1286,9 +1247,7 @@ function Home() {
                       >
                         <SafeImage
                           src={image}
-                          sources={images.slice(
-                            imageIndex + 1,
-                          )}
+                          sources={images.slice(imageIndex + 1)}
                           alt={`${category} — field photo ${imageIndex + 1}`}
                           className="aspect-square h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                           loading="lazy"
@@ -1426,9 +1385,7 @@ function Home() {
 
           <Stagger className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3">
             {galleryImages.map((item, index) => (
-              <StaggerItem
-                key={`${item.alt}-${index}`}
-              >
+              <StaggerItem key={`${item.alt}-${index}`}>
                 <div className="group relative overflow-hidden rounded-2xl">
                   <SafeImage
                     src={item.image}
