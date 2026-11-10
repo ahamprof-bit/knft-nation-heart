@@ -1,5 +1,6 @@
 
 import { useEffect, useRef, useState } from "react";
+import knftLogo from "./knft-logo.png.webp";
 
 type KNFTIntroProps = {
   onComplete: () => void;
@@ -8,7 +9,6 @@ type KNFTIntroProps = {
 const TOTAL_DURATION = 15000;
 const EXIT_DURATION = 500;
 
-const LOGO_URL = "/knft-logo.png.webp";
 
 const videos = [
   {
@@ -507,7 +507,7 @@ export default function KNFTIntro({ onComplete }: KNFTIntroProps) {
         <div className="knft-brand">
           <div className="knft-logo-wrap">
             <img
-              src={LOGO_URL}
+              src={knftLogo}
               alt="KNFT logo"
               className="knft-logo"
               onLoad={() => setLogoLoaded(true)}
